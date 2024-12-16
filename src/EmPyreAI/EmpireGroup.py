@@ -75,8 +75,8 @@ class EmpireGroup:
   #region Instance Methods
   def GetFromCMD(self, groupname):
     # We need to make sure that anyone attempting to modify these groups is a member of them
-    user_groups = [g.gr_name for g in grp.getgrall() if self.username in g.gr_mem]
-    gid = pwd.getpwnam(self.username).pw_gid
+    user_groups = [g.gr_name for g in grp.getgrall() if getpass.getuser() in g.gr_mem]
+    gid = pwd.getpwnam(getpass.getuser()).pw_gid
     user_groups.append(grp.getgrgid(gid).gr_name)
 
     if groupname not in user_groups:
