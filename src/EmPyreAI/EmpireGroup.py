@@ -96,9 +96,6 @@ class EmpireGroup:
     gid = pwd.getpwnam(getpass.getuser()).pw_gid
     user_groups.append(grp.getgrgid(gid).gr_name)
 
-    print("User is a member of:")
-    print(user_groups)
-
     if self.name not in user_groups:
       return False
     
@@ -106,7 +103,6 @@ class EmpireGroup:
 
   def Commit(self):
     """Commit changes to Base Command"""
- 
     if self.CanChange(getpass.getuser()) == False: 
       print(f"[ \033[31mERROR\033[0m ] You are not allowed to modify membership of the group \033[31m{self.name}\033[0m.")
       sys.exit(1)
