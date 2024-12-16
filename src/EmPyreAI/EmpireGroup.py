@@ -96,11 +96,7 @@ class EmpireGroup:
     gid = pwd.getpwnam(getpass.getuser()).pw_gid
     user_groups.append(grp.getgrgid(gid).gr_name)
 
-    if groupname not in user_groups:
-      print(f"[ \033[31mERROR\033[0m ] You are not allowed to modify membership of the group \033[31m{groupname}\033[0m.")
-      return False
-
-    if self.name == "sudo":
+    if self.name == "sudo" or self.name not in user_groups:
       print(f"[ \033[31mERROR\033[0m ] You are not allowed to modify membership of the group \033[31m{self.name}\033[0m.")
       sys.exit(1)
     result = self.group_data.commit()
