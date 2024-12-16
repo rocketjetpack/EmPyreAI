@@ -36,6 +36,8 @@ import EmPyreAI.EmpireUtils as EUtils
 from EmPyreAI.EmpireGroup import EmpireGroup
 import re
 from datetime import datetime
+import grp
+import pwd
 
 class EmpireUser:
   #region Constructors
@@ -266,8 +268,8 @@ class EmpireUser:
   #region Groups Property
   def GetGroups(self):
     # use pwd and grp modules as they are SIGNIFICANTLY faster than looping objects in pythoncm
-    self.groups = [g.gr_name for g in grp.getgrall() if user in g.gr_mem]
-    gid = pwd.getpwnam(user).pw_gid
+    self.groups = [g.gr_name for g in grp.getgrall() if self.username in g.gr_mem]
+    gid = pwd.getpwnam(self.username).pw_gid
     self.groups.append(grp.getgrgid(gid).gr_name)
     return self.groups
   

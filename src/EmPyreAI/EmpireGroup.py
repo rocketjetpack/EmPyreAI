@@ -28,7 +28,6 @@ from pythoncm.entity import User
 import getpass
 import json
 import EmPyreAI.EmpireUtils as EUtils
-import EmPyreAI.EmpireUser as EmpireUser
 import re
 from datetime import datetime
 import sys
@@ -73,7 +72,6 @@ class EmpireGroup:
 
   #region Instance Methods
   def GetFromCMD(self, groupname):
-    if groupname not in EmpireUser(getpass.getuser()).groups:
       # We need to make sure that anyone attempting to modify these groups is a member of them
       
       print(f"[ \033[31mERROR\033[0m ] You are not allowed to modify membership of the group \033[31m{groupname}\033[0m.")
