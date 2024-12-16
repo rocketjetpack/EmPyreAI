@@ -168,11 +168,12 @@ class EmpireUser:
     else:
       return None
   
+  #region Username Property
   def GetUsername(self):
     return self.user_data.name
   
-  def GetExists(self):
-    return self.exists
+  username = property(GetUsername)
+  #endregion
   
   #region First and Last Name Properties
   def GetFirstName(self):
@@ -262,7 +263,13 @@ class EmpireUser:
   project = property(GetProject)
   #endregion
   
+  #region Groups Property
+  def GetGroups(self):
+    # use pwd and grp modules as they are SIGNIFICANTLY faster than looping objects in pythoncm
+    self.groups = [g.gr_name for g in grp.getgrall() if user in g.gr_mem]
+    gid = pwd.getpwnam(user).pw_gid
+    self.groups.append(EmpireGroup(grp.getgrgid(gid).gr_name))
+    return self.groups
   
-
-  username = property(GetUsername)
+  groups = property(GetGroups)
   #endregion

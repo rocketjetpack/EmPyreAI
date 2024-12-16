@@ -28,6 +28,7 @@ from pythoncm.entity import User
 import getpass
 import json
 import EmPyreAI.EmpireUtils as EUtils
+import EmPyreAI.EmpireUser as EmpireUser
 import re
 from datetime import datetime
 import sys
@@ -88,7 +89,7 @@ class EmpireGroup:
   def Commit(self):
     """Commit changes to Base Command"""
 
-    if self.name == "sudo" or self.name == "coordinator":
+    if self.name == "sudo":
       print(f"[ \033[31mERROR\033[0m ] You are not allowed to modify membership of the group \033[31m{self.name}\033[0m.")
       sys.exit(1)
     result = self.group_data.commit()

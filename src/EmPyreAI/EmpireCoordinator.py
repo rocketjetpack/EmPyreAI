@@ -33,6 +33,10 @@ class EmpireCoordinator:
         else:
             return False
         
+    def GetCoordinators(self):
+        """This funciton will use PrettyTable to print a table listing all current coordinators on the system."""
+        return self.group.members
+        
     def EnableCoordinator(self):
         """This function will flag this account as a coordinator and add them to the necessary LDAP group."""
         self.user.AppendNote("is_coordinator", "True")
