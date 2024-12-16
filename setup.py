@@ -2,7 +2,7 @@
 they may be completed without elevated privileges."""
 
 from setuptools import setup, find_packages
-ipmort pathlib
+import pathlib
 
 here = pathlib.Path(__file__).parent.resolve()
 
