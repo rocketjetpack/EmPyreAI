@@ -92,6 +92,13 @@ class EmpireGroup:
 
   def Commit(self):
     """Commit changes to Base Command"""
+    user_groups = [g.gr_name for g in grp.getgrall() if getpass.getuser() in g.gr_mem]
+    gid = pwd.getpwnam(getpass.getuser()).pw_gid
+    user_groups.append(grp.getgrgid(gid).gr_name)
+
+    if groupname not in user_groups:
+      print(f"[ \033[31mERROR\033[0m ] You are not allowed to modify membership of the group \033[31m{groupname}\033[0m.")
+      return False
 
     if self.name == "sudo":
       print(f"[ \033[31mERROR\033[0m ] You are not allowed to modify membership of the group \033[31m{self.name}\033[0m.")
