@@ -1,3 +1,25 @@
+# This file contains the EmpireGroup class to represent a group of users on the Empire AI Alpha system.
+#
+# Class Properties:
+#   - id = (get) Returns the GID number
+#   - name = (get) Returns the name of the groups
+#   - members = (get) Returns a list of usernames with membership in this group
+#
+# Static Functions:
+#   - Exists(): Returns bool. True if the group exists, False if it does not.
+#
+# Class Functions:
+#   - GetFromCMD(): Loads group data from the Base Command API into the group_data variable. Returns (bool)
+#   - Commit(): Commits changes of group information to the Base Command API. Returns (bool).
+#   - AddMember(): Adds a member to the membership list of this group. Returns (bool).
+#   - RemoveMember(): Removes a member from the membership list of this group. Returns (bool).
+#  
+# This makes use of the EmPyreAI module and ultimately the Base Command API
+#   to provide user management capabilities to coordinators without requiring
+#   elevated privileges on the cluster.
+#
+# Author: Kali McLennan (Flatiron Institute) - kmclennan@flatironinstitute.org
+
 import os
 import pwd
 from pythoncm.cluster import Cluster

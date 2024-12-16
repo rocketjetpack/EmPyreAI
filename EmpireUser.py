@@ -1,3 +1,30 @@
+# This file contains the EmpireUser class to represent a group of users on the Empire AI Alpha system.
+#
+# Class Properties:
+#   - username = (get) Returns the username of the account
+#   - firstname = (get|set) Returns or sets the first name of the account
+#   - lastname = (get|set) Returns or sets the last name of the account
+#   - notes = (get|set) Returns or sets the notes about the user as a Python dictionary
+#   - phone = (get|set) Returns or sets the "phone" key of the notes field
+#   - email = (get|set) Returns or sets the email of the account
+#   - project = (get|set) Returns or sets the "project" key of the notes field
+#
+# Static Functions:
+#   - Exists(): Returns bool. True if the user exists, False if it does not.
+#   - New(): Returns bool. Creates a new stub user in Base Command.
+#
+# Class Functions:
+#   - GetFromCMD(): Loads user data from the Base Command API into the user_data variable. Returns (bool)
+#   - Commit(): Commits changes of user information to the Base Command API. Returns (bool).
+#   - SetUserData(): Accepts a dictionary and makes a bulk commit to Base Command without confirmation. Returns (bool).
+#   - AppendNote(): Adds a new key to the notes property. Returns (bool).
+#  
+# This makes use of the EmPyreAI module and ultimately the Base Command API
+#   to provide user management capabilities to coordinators without requiring
+#   elevated privileges on the cluster.
+#
+# Author: Kali McLennan (Flatiron Institute) - kmclennan@flatironinstitute.org
+
 import os
 import pwd
 from pythoncm.cluster import Cluster
