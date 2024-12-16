@@ -18,10 +18,12 @@
 # Author: Kali McLennan (Flatiron Institute) - kmclennan@flatironinstitute.org
 
 from EmPyreAI.EmpireUser import EmpireUser
+from EmPyreAI.EmpireGroup import EmpireGroup
 import EmPyreAI.EmpireUtils as EUtils
 
 class EmpireCoordinator:
     def __init__(self, username):
+        self.group = EmpireGroup("coordinator")
         if EmpireUser.Exists(username):
             self.user = EmpireUser(username)
             if "is_coordinator" in self.user.notes.keys():
