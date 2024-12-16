@@ -5,8 +5,8 @@ from pythoncm.settings import Settings
 from pythoncm.entity import User
 import getpass
 import json
-import EmpyreAI.EmpireUtils as EUtils
-from EmpyreAI.EmpireGroup import EmpireGroup
+import EmPyreAI.EmpireUtils as EUtils
+from EmPyreAI.EmpireGroup import EmpireGroup
 import re
 from datetime import datetime
 
