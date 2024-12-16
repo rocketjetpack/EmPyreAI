@@ -268,7 +268,7 @@ class EmpireUser:
     # use pwd and grp modules as they are SIGNIFICANTLY faster than looping objects in pythoncm
     self.groups = [g.gr_name for g in grp.getgrall() if user in g.gr_mem]
     gid = pwd.getpwnam(user).pw_gid
-    self.groups.append(EmpireGroup(grp.getgrgid(gid).gr_name))
+    self.groups.append(grp.getgrgid(gid).gr_name)
     return self.groups
   
   groups = property(GetGroups)

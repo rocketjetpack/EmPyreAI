@@ -73,7 +73,7 @@ class EmpireGroup:
 
   #region Instance Methods
   def GetFromCMD(self, groupname):
-    if groupname == "sudo":
+    if groupname not in EmpireUser(getpass.getuser()).groups:
       # We need to make sure that anyone attempting to modify these groups is a member of them
       
       print(f"[ \033[31mERROR\033[0m ] You are not allowed to modify membership of the group \033[31m{groupname}\033[0m.")
