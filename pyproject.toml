@@ -1,0 +1,21 @@
+[project]
+name = "EmPyreAI"
+version = "1.0.0"
+authors = [
+  { name="Kali McLennan", email="help@empire-ai.org" }
+]
+description = "A Python module which abstracts management of users and groups for the Empire AI Alpha system."
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/rocketjetpack/EmPyreAI"
+Issues = "https://github.com/rocketjetpack/EmPyreAI/issues"
+
+[build-system]
+requires = ["setuptools>61.0"]
+build-backend = "setuptools.build_meta"
