@@ -78,10 +78,6 @@ class EmpireGroup:
     user_groups = [g.gr_name for g in grp.getgrall() if getpass.getuser() in g.gr_mem]
     gid = pwd.getpwnam(getpass.getuser()).pw_gid
     user_groups.append(grp.getgrgid(gid).gr_name)
-
-    if groupname not in user_groups:
-      print(f"[ \033[31mERROR\033[0m ] You are not allowed to modify membership of the group \033[31m{groupname}\033[0m.")
-      sys.exit(1)
     
     self.group_data = self.cluster.get_by_name(groupname, 'Group')
     if self.group_data == None:
