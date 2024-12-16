@@ -31,6 +31,8 @@ import EmPyreAI.EmpireUtils as EUtils
 import re
 from datetime import datetime
 import sys
+import grp
+import pwd
 
 class EmpireGroup:
   #region Constructors
@@ -72,8 +74,12 @@ class EmpireGroup:
 
   #region Instance Methods
   def GetFromCMD(self, groupname):
-      # We need to make sure that anyone attempting to modify these groups is a member of them
-      
+    # We need to make sure that anyone attempting to modify these groups is a member of them
+    user_groups = [g.gr_name for g in grp.getgrall() if self.username in g.gr_mem]
+    gid = pwd.getpwnam(self.username).pw_gid
+    user_groups.append(grp.getgrgid(gid).gr_name)
+
+    if groupname not in user_groups:
       print(f"[ \033[31mERROR\033[0m ] You are not allowed to modify membership of the group \033[31m{groupname}\033[0m.")
       sys.exit(1)
     
