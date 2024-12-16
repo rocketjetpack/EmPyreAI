@@ -90,13 +90,28 @@ class EmpireGroup:
     else:
       self.exists = True
 
-  def Commit(self):
-    """Commit changes to Base Command"""
+  def CanChange(self, username):
+    # Automatically reject any changes to the sudo group
+    if self.name == "sudo":
+      return False
+
+    # Get a list of groups that the current user is in
     user_groups = [g.gr_name for g in grp.getgrall() if getpass.getuser() in g.gr_mem]
     gid = pwd.getpwnam(getpass.getuser()).pw_gid
     user_groups.append(grp.getgrgid(gid).gr_name)
 
-    if self.name == "sudo" or self.name not in user_groups:
+    print("User is a member of:")
+    print(user_groups)
+
+    if self.name not in user_groups:
+      return False
+    
+    return True
+
+  def Commit(self):
+    """Commit changes to Base Command"""
+ 
+    if self.CanChange(getpass.getuser()) == False: 
       print(f"[ \033[31mERROR\033[0m ] You are not allowed to modify membership of the group \033[31m{self.name}\033[0m.")
       sys.exit(1)
     result = self.group_data.commit()
