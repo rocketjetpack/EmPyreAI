@@ -30,11 +30,12 @@ class EmpireSlurm:
         "port": 6820,
     }
 
-    endPoints = {
-        "diag": "slurm/" + self.config["apiVersion"] + "/diag",
-        "accounts": "slurmdb/" + self.config["apiVersion"] + "/accounts",
-        "account": "slurmdb/" + self.config["apiVersion"] + "/account/_NAME",
-        "partitions": "slurm/" + self.config["apiVersion"] + "/partitions",
-        "partition": "slurm/" + self.config["apiVersion"] + "/partition/_NAME",
-    },
+    def __init__(self):
+        self.endPoints = {
+            "diag": "slurm/" + self.config["apiVersion"] + "/diag",
+            "accounts": "slurmdb/" + self.config["apiVersion"] + "/accounts",
+            "account": "slurmdb/" + self.config["apiVersion"] + "/account/_NAME",
+            "partitions": "slurm/" + self.config["apiVersion"] + "/partitions",
+            "partition": "slurm/" + self.config["apiVersion"] + "/partition/_NAME",
+        },
 
