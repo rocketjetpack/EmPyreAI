@@ -52,9 +52,10 @@ class EmpireUser:
         key_file=f'/mnt/home/{getpass.getuser()}/.empireai/cmsh_api.key',
         ca_file='/usr/lib64/python3.9/site-packages/pythoncm/etc/cacert.pem'
       )
-      cluster = Cluster(cmd_settings)
+      self.cluster = Cluster(cmd_settings)
     else:
-      cluster = Cluster()
+      self.cluster = Cluster()
+    self.SlurmAPI = EmpireSlurm()
     
     self.exists = False
     self.GetFromCMD(username)
@@ -64,6 +65,7 @@ class EmpireUser:
   #region Static Methods
   @staticmethod
   def Exists(username):
+    cluster = None
     if getpass.getuser() != "root":
       cmd_settings = Settings(
         host="alpha-mgr",
@@ -85,6 +87,7 @@ class EmpireUser:
 
   @staticmethod
   def New(username):
+    cluster = None
     if getpass.getuser() != "root":
       cmd_settings = Settings(
         host="alpha-mgr",
@@ -145,10 +148,10 @@ class EmpireUser:
       self.exists = True
 
   def GetFromSlurm(self, username):
-    apiClient = EmpireSlurm()
+
     print("Attempting a GET")
-    if username in apiClient.GetAllUsers():
-      self.SlurmAccounts = apiClient.GetAllUsers()[username]
+    if username in self.SlurmAPI.GetAllUsers():
+      self.SlurmAccounts = self.SlurmAPI.GetAllUsers()[username]
     else:
       self.SlurmAccounts = {}
 

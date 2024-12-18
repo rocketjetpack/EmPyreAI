@@ -27,7 +27,7 @@ import requests
 import os
 import pprint
 import sys
-
+from pathlib import Path
 
 class EmpireSlurm:
     config = {
@@ -51,11 +51,11 @@ class EmpireSlurm:
         self.token = self.LoadToken()
 
     def LoadToken(self):
-        if os.path.exists(f"/mnt/home/{self.username}/.slurmtoken"):
-            with open(f"/mnt/home/{self.username}/.slurmtoken") as tokenfile:
-                return tokenfile.readline()
+        if os.path.exists(f"{Path.home()}/.slurmtoken"):
+            with open(f"{Path.home()}/.slurmtoken") as tokenfile:
+                return tokenfile.readline().strip()
         else:
-            print(f"No Slurm API token file is found. Please ask for assistance.")    
+            return None
 
     #region Basic GET PUT POST Functions
 
@@ -81,14 +81,18 @@ class EmpireSlurm:
         pass
 
     def Get(self, additionalFields = ""):
-        if additionalFields != None:
-            url = f"{self.config['protocol']}://{self.config['apiServer']}:{self.config['port']}/{self.endpoint}/{additionalFields}"
+        if self.token != None:
+            if additionalFields != None:
+                url = f"{self.config['protocol']}://{self.config['apiServer']}:{self.config['port']}/{self.endpoint}/{additionalFields}"
+            else:
+                url = f"{self.config['protocol']}://{self.config['apiServer']}:{self.config['port']}/{self.endpoint}"
+            if self.config["verbose"]:
+                print(f"[ DEBUG ] Request URL: {url}")
+            response = requests.get(url, headers=self.GetHeaders())
+            return response
         else:
-            url = f"{self.config['protocol']}://{self.config['apiServer']}:{self.config['port']}/{self.endpoint}"
-        if self.config["verbose"]:
-            print(f"[ DEBUG ] Request URL: {url}")
-        response = requests.get(url, headers=self.GetHeaders())
-        return response
+            print(f"No Slurm API token found. Cannot use GET.")
+            return None
 
     def Put(self):
         pass
