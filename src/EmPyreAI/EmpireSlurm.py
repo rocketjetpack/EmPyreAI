@@ -37,7 +37,7 @@ class EmpireSlurm:
     }
 
     def __init__(self):
-        self.endPoints = {
+        self.endpoints = {
             "diag": "slurm/" + self.config["apiVersion"] + "/diag",
             "accounts": "slurmdb/" + self.config["apiVersion"] + "/accounts",
             "account": "slurmdb/" + self.config["apiVersion"] + "/account/",
@@ -65,11 +65,21 @@ class EmpireSlurm:
     token = property(GetToken, SetToken)
     #endregion
 
+    #region Endpoint Selection Property
+    def GetEndpoint(self):
+        return self.activeEndpoint
+    
+    def SetEndpoint(self, value):
+        self.activeEndpoint = value
+
+    endpoint = property(GetEndpoint, SetEndpoint)
+    #endregion
+
     def Post(self):
         pass
 
-    def Get(self):
-        url = f"{self.config['protocol']}://{self.config['apiServer']}:{self.config['port']}/{self.endPoints['diag']}"
+    def Get(self, additionalFields = None):
+        url = f"{self.config['protocol']}://{self.config['apiServer']}:{self.config['port']}/{self.endpoint}/{additionalFields}"
         response = requests.get(url, headers=self.GetHeaders())
         return response.json()
 
