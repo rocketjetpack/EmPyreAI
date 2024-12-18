@@ -80,6 +80,7 @@ class EmpireSlurm:
 
     def Get(self, additionalFields = None):
         url = f"{self.config['protocol']}://{self.config['apiServer']}:{self.config['port']}/{self.endpoint}/{additionalFields}"
+        print(f"  URL = {url})
         response = requests.get(url, headers=self.GetHeaders())
         return response
 
