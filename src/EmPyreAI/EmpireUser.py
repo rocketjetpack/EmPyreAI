@@ -77,14 +77,17 @@ class EmpireUser:
 
   @staticmethod
   def New(username):
-    cmd_settings = Settings(
-      host="alpha-mgr",
-      port=8081,
-      cert_file=f'/mnt/home/{getpass.getuser()}/.empireai/cmsh_api.pem',
-      key_file=f'/mnt/home/{getpass.getuser()}/.empireai/cmsh_api.key',
-      ca_file='/usr/lib64/python3.9/site-packages/pythoncm/etc/cacert.pem'
-    )
-    cluster = Cluster(cmd_settings)
+    if getpass.getuser() not "root":
+      cmd_settings = Settings(
+        host="alpha-mgr",
+        port=8081,
+        cert_file=f'/mnt/home/{getpass.getuser()}/.empireai/cmsh_api.pem',
+        key_file=f'/mnt/home/{getpass.getuser()}/.empireai/cmsh_api.key',
+        ca_file='/usr/lib64/python3.9/site-packages/pythoncm/etc/cacert.pem'
+      )
+      cluster = Cluster(cmd_settings)
+    else:
+      cluster = Cluster()
     new_user = User(cluster)
 
     new_user.name = username
@@ -135,7 +138,6 @@ class EmpireUser:
 
   def GetFromSlurm(self, username):
     apiClient = EmpireSlurm()
-    apiClient.token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjYwNzY0ODMsImlhdCI6MTczNDU0MDQ4Mywic3VuIjoia21jbGVubmFuIn0.bwdlll1w02DfgUkNsQgyX_Zu6r-uElO6aSEZqQEbNAU"
     print("Attempting a GET")
     if username in apiClient.GetAllUsers():
       self.SlurmAccounts = apiClient.GetAllUsers()[username]
