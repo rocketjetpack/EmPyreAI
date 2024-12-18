@@ -25,6 +25,7 @@
 import getpass
 import requests
 import os
+import pprint
 import sys
 
 
@@ -34,6 +35,7 @@ class EmpireSlurm:
         "apiServer": "alpha-mgr",
         "protocol": "http",
         "port": 6820,
+        "verbose": True
     }
 
     def __init__(self):
@@ -43,8 +45,46 @@ class EmpireSlurm:
             "account": "slurmdb/" + self.config["apiVersion"] + "/account/",
             "partitions": "slurm/" + self.config["apiVersion"] + "/partitions",
             "partition": "slurm/" + self.config["apiVersion"] + "/partition/",
+            "users": "slurmdb/" + self.config["apiVersion"] + "/users"
         }
         self.username = getpass.getuser()
+
+    #region Basic GET PUT POST Functions
+
+    def GetAllUsers(self):
+        self.endpoint = self.endpoints["users"]
+        results = self.Get()
+        retVal = {}
+        if results.status_code == 200:
+            if self.config["verbose"]:
+                print("[ DEBUG ] GetAllUsers(): Return code = {results.status_code}")
+            resultJson = results.json()
+            for user in resultJson["users"]:
+                thisUser = {}
+                thisUser["accounts"] = {}
+                accountIndex = 0
+                for account in user["associations"]:
+                    thisUser["accounts"][accountIndex] = account["account"]
+                    accountIndex += 1
+                retVal[user["name"]] = thisUser
+        return retVal                
+
+    def Post(self):
+        pass
+
+    def Get(self, additionalFields = ""):
+        if additionalFields != None:
+            url = f"{self.config['protocol']}://{self.config['apiServer']}:{self.config['port']}/{self.endpoint}/{additionalFields}"
+        else:
+            url = f"{self.config['protocol']}://{self.config['apiServer']}:{self.config['port']}/{self.endpoint}"
+        if self.config["verbose"]:
+            print(f"[ DEBUG ] Request URL: {url}")
+        response = requests.get(url, headers=self.GetHeaders())
+        return response
+
+    def Put(self):
+        pass
+    #endregion
 
     #region Headers
     # Headers need to include X-SLURM-USER-NAME and X-SLURM-USER-TOKEN
@@ -75,14 +115,4 @@ class EmpireSlurm:
     endpoint = property(GetEndpoint, SetEndpoint)
     #endregion
 
-    def Post(self):
-        pass
-
-    def Get(self, additionalFields = None):
-        url = f"{self.config['protocol']}://{self.config['apiServer']}:{self.config['port']}/{self.endpoint}/{additionalFields}"
-        print(f"  URL = {url})
-        response = requests.get(url, headers=self.GetHeaders())
-        return response
-
-    def Put(self):
-        pass
+    

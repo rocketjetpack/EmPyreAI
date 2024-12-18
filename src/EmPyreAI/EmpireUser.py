@@ -34,6 +34,7 @@ import getpass
 import json
 import EmPyreAI.EmpireUtils as EUtils
 from EmPyreAI.EmpireGroup import EmpireGroup
+from EmPyreAI.EmpireSlurm import EmpireSlurm
 import re
 from datetime import datetime
 import grp
@@ -53,6 +54,7 @@ class EmpireUser:
     self.cluster = Cluster(self.cmd_settings)
     self.exists = False
     self.GetFromCMD(username)
+    self.GetFromSlurm(username)
   #endregion 
 
   #region Static Methods
@@ -130,6 +132,12 @@ class EmpireUser:
       return False
     else:
       self.exists = True
+
+  def GetFromSlurm(self, username):
+    apiClient = EmpireSlurm()
+    apiClient.token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjYwNzY0ODMsImlhdCI6MTczNDU0MDQ4Mywic3VuIjoia21jbGVubmFuIn0.bwdlll1w02DfgUkNsQgyX_Zu6r-uElO6aSEZqQEbNAU"
+    print("Attempting a GET")
+    self.SlurmAccounts = json.loads(apiClient.GetAllUsers()[username]))
 
   def Commit(self):
     """Commit changes to Base Command"""
