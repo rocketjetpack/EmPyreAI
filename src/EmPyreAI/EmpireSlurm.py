@@ -81,7 +81,7 @@ class EmpireSlurm:
     def Get(self, additionalFields = None):
         url = f"{self.config['protocol']}://{self.config['apiServer']}:{self.config['port']}/{self.endpoint}/{additionalFields}"
         response = requests.get(url, headers=self.GetHeaders())
-        return response.json()
+        return response
 
     def Put(self):
         pass
