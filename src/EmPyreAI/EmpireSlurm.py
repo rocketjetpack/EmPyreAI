@@ -49,6 +49,7 @@ class EmpireSlurm:
         }
         self.username = getpass.getuser()
         self.token = self.LoadToken()
+        self.AllUsers = None
 
     def LoadToken(self):
         if os.path.exists(f"{Path.home()}/.slurmtoken"):
@@ -58,6 +59,15 @@ class EmpireSlurm:
             return None
 
     #region Basic GET PUT POST Functions
+
+    def GetUser(self, username):
+        self.GetAllUsers()
+        if username in self.AllUsers:
+            print(f"{username} already exists in the AllUsers list.")
+            return self.AllUsers[username]
+        else:
+            print(f"{username} DOES NOT EXIST IN SLURM")
+            return None
 
     def GetAllUsers(self):
         if self.AllUsers == None:
@@ -76,9 +86,8 @@ class EmpireSlurm:
                         thisUser["accounts"][accountIndex] = account["account"]
                         accountIndex += 1
                     retVal[user["name"]] = thisUser
-            self.AllUsers = retVal               
-
-    AllUsers = property(GetAllUsers)
+            self.AllUsers = retVal
+        return self.AllUsers               
 
     def Post(self):
         pass

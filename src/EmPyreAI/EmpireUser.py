@@ -55,11 +55,9 @@ class EmpireUser:
       self.cluster = Cluster(cmd_settings)
     else:
       self.cluster = Cluster()
-    self.SlurmAPI = EmpireSlurm()
     
     self.exists = False
     self.GetFromCMD(username)
-    self.GetFromSlurm(username)
   #endregion 
 
   #region Static Methods
@@ -147,11 +145,6 @@ class EmpireUser:
     else:
       self.exists = True
 
-  def GetFromSlurm(self, username):
-    if username in self.SlurmAPI.AllUsers:
-      self.SlurmAccounts = self.SlurmAPI.AllUsers[username]
-    else:
-      self.SlurmAccounts = {}
 
   def Commit(self):
     """Commit changes to Base Command"""
