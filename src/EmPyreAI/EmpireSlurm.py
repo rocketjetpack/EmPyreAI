@@ -70,7 +70,7 @@ class EmpireSlurm:
 
     def Get(self):
         url = f"{self.config['protocol']}://{self.config['apiServer']}:{self.config['port']}/{self.endPoints['diag']}"
-        response = requests.get(api_url, headers=self.GetHeaders())
+        response = requests.get(url, headers=self.GetHeaders())
         print(response)
 
     def Put(self):
