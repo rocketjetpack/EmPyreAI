@@ -137,7 +137,10 @@ class EmpireUser:
     apiClient = EmpireSlurm()
     apiClient.token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjYwNzY0ODMsImlhdCI6MTczNDU0MDQ4Mywic3VuIjoia21jbGVubmFuIn0.bwdlll1w02DfgUkNsQgyX_Zu6r-uElO6aSEZqQEbNAU"
     print("Attempting a GET")
-    self.SlurmAccounts = json.loads(apiClient.GetAllUsers()[username]))
+    if username in apiClient.GetAllUsers():
+      self.SlurmAccounts = apiClient.GetAllUsers()[username]
+    else:
+      self.SlurmAccounts = {}
 
   def Commit(self):
     """Commit changes to Base Command"""
