@@ -60,13 +60,11 @@ class EmpireSlurm:
 
     #region Basic GET PUT POST Functions
 
-    def GetUser(self, username):
+    def GetUserAccounts(self, username):
         self.GetAllUsers()
         if username in self.AllUsers:
-            print(f"{username} already exists in the AllUsers list.")
             return self.AllUsers[username]
         else:
-            print(f"{username} DOES NOT EXIST IN SLURM")
             return None
 
     def GetAllUsers(self):
