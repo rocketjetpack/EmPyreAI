@@ -60,22 +60,25 @@ class EmpireSlurm:
     #region Basic GET PUT POST Functions
 
     def GetAllUsers(self):
-        self.endpoint = self.endpoints["users"]
-        results = self.Get()
-        retVal = {}
-        if results.status_code == 200:
-            if self.config["verbose"]:
-                print("[ DEBUG ] GetAllUsers(): Return code = {results.status_code}")
-            resultJson = results.json()
-            for user in resultJson["users"]:
-                thisUser = {}
-                thisUser["accounts"] = {}
-                accountIndex = 0
-                for account in user["associations"]:
-                    thisUser["accounts"][accountIndex] = account["account"]
-                    accountIndex += 1
-                retVal[user["name"]] = thisUser
-        return retVal                
+        if self.AllUsers == None:
+            self.endpoint = self.endpoints["users"]
+            results = self.Get()
+            retVal = {}
+            if results.status_code == 200:
+                if self.config["verbose"]:
+                    print("[ DEBUG ] GetAllUsers(): Return code = {results.status_code}")
+                resultJson = results.json()
+                for user in resultJson["users"]:
+                    thisUser = {}
+                    thisUser["accounts"] = {}
+                    accountIndex = 0
+                    for account in user["associations"]:
+                        thisUser["accounts"][accountIndex] = account["account"]
+                        accountIndex += 1
+                    retVal[user["name"]] = thisUser
+            self.AllUsers = retVal               
+
+    AllUsers = property(GetAllUsers)
 
     def Post(self):
         pass

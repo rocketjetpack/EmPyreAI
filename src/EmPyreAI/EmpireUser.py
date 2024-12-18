@@ -148,10 +148,8 @@ class EmpireUser:
       self.exists = True
 
   def GetFromSlurm(self, username):
-
-    print("Attempting a GET")
-    if username in self.SlurmAPI.GetAllUsers():
-      self.SlurmAccounts = self.SlurmAPI.GetAllUsers()[username]
+    if username in self.SlurmAPI.AllUsers:
+      self.SlurmAccounts = self.SlurmAPI.AllUsers[username]
     else:
       self.SlurmAccounts = {}
 
