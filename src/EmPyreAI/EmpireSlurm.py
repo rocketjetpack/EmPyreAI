@@ -48,6 +48,14 @@ class EmpireSlurm:
             "users": "slurmdb/" + self.config["apiVersion"] + "/users"
         }
         self.username = getpass.getuser()
+        self.token = self.LoadToken()
+
+    def LoadToken(self):
+        if os.path.exists(f"/mnt/home/{self.username}/.slurmtoken"):
+            with open(f"/mnt/home/{self.username}/.slurmtoken") as tokenfile:
+                return tokenfile.readline()
+        else:
+            print(f"No Slurm API token file is found. Please ask for assistance.")    
 
     #region Basic GET PUT POST Functions
 
