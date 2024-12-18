@@ -44,14 +44,18 @@ class EmpireUser:
   #region Constructors
   def __init__(self, username):
     """Initialize an EmpireUser instance for the specified username."""
-    self.cmd_settings = Settings(
-      host="alpha-mgr",
-      port=8081,
-      cert_file=f'/mnt/home/{getpass.getuser()}/.empireai/cmsh_api.pem',
-      key_file=f'/mnt/home/{getpass.getuser()}/.empireai/cmsh_api.key',
-      ca_file='/usr/lib64/python3.9/site-packages/pythoncm/etc/cacert.pem'
-    )
-    self.cluster = Cluster(self.cmd_settings)
+    if getpass.getuser() != "root":
+      cmd_settings = Settings(
+        host="alpha-mgr",
+        port=8081,
+        cert_file=f'/mnt/home/{getpass.getuser()}/.empireai/cmsh_api.pem',
+        key_file=f'/mnt/home/{getpass.getuser()}/.empireai/cmsh_api.key',
+        ca_file='/usr/lib64/python3.9/site-packages/pythoncm/etc/cacert.pem'
+      )
+      cluster = Cluster(cmd_settings)
+    else:
+      cluster = Cluster()
+    
     self.exists = False
     self.GetFromCMD(username)
     self.GetFromSlurm(username)
@@ -60,14 +64,18 @@ class EmpireUser:
   #region Static Methods
   @staticmethod
   def Exists(username):
-    cmd_settings = Settings(
-      host="alpha-mgr",
-      port=8081,
-      cert_file=f'/mnt/home/{getpass.getuser()}/.empireai/cmsh_api.pem',
-      key_file=f'/mnt/home/{getpass.getuser()}/.empireai/cmsh_api.key',
-      ca_file='/usr/lib64/python3.9/site-packages/pythoncm/etc/cacert.pem'
-    )
-    cluster = Cluster(cmd_settings)
+    if getpass.getuser() != "root":
+      cmd_settings = Settings(
+        host="alpha-mgr",
+        port=8081,
+        cert_file=f'/mnt/home/{getpass.getuser()}/.empireai/cmsh_api.pem',
+        key_file=f'/mnt/home/{getpass.getuser()}/.empireai/cmsh_api.key',
+        ca_file='/usr/lib64/python3.9/site-packages/pythoncm/etc/cacert.pem'
+      )
+      cluster = Cluster(cmd_settings)
+    else:
+      cluster = Cluster()
+    
     user_data = cluster.get_by_name(username, 'User')
     cluster.disconnect()
     if user_data == None:
@@ -77,7 +85,7 @@ class EmpireUser:
 
   @staticmethod
   def New(username):
-    if getpass.getuser() not "root":
+    if getpass.getuser() != "root":
       cmd_settings = Settings(
         host="alpha-mgr",
         port=8081,
