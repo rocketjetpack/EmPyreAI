@@ -78,11 +78,11 @@ class EmpireSlurm:
                 resultJson = results.json()
                 for user in resultJson["users"]:
                     thisUser = {}
-                    thisUser["accounts"] = {}
-                    accountIndex = 0
+                    accountList = list()
                     for account in user["associations"]:
-                        thisUser["accounts"][accountIndex] = account["account"]
-                        accountIndex += 1
+                        accountList.append(account["account"])
+                    thisUser["accounts"] = accountList
+
                     retVal[user["name"]] = thisUser
             self.AllUsers = retVal
         return self.AllUsers               
