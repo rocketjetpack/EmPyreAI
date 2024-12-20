@@ -185,6 +185,22 @@ class EmpireUser:
     else:
       return None
   
+  #region PI Property
+  def GetPI(self):
+    if "pi" in self.notes:
+      return self.notes["pi"]
+  
+  def SetPI(self, value):
+    if "pi" in self.notes:
+      self.notes["pi"] = value
+      self.Commit()
+    else:
+      self.AppendNote("pi", value)
+      self.Commit()
+
+  pi = property(GetPI, SetPI)
+  #endregion
+
   #region Username Property
   def GetUsername(self):
     return self.user_data.name
