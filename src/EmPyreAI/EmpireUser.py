@@ -111,6 +111,23 @@ class EmpireUser:
       return False
     
     return True
+  
+  @staticmethod
+  def FetchAllUsers():
+    cluster = None
+    if getpass.getuser() != "root":
+      cmd_settings = Settings(
+        host="alpha-mgr",
+        port=8081,
+        cert_file=f'/mnt/home/{getpass.getuser()}/.empireai/cmsh_api.pem',
+        key_file=f'/mnt/home/{getpass.getuser()}/.empireai/cmsh_api.key',
+        ca_file='/usr/lib64/python3.9/site-packages/pythoncm/etc/cacert.pem'
+      )
+      cluster = Cluster(cmd_settings)
+    else:
+      cluster = Cluster()
+    
+    print(json.dumps(cluster.get_user_data()))
   #endregion
 
   #region Instance Methods
