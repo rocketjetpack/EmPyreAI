@@ -43,7 +43,7 @@ import pwd
 
 class EmpireUser:
   #region Constructors
-  def __init__(self, username, load=True, cluster=None):
+  def __init__(self, username, load=True):
     """Initialize an EmpireUser instance for the specified username."""
     if load:
       self.GetFromCMD(username)
@@ -106,7 +106,7 @@ class EmpireUser:
     return True
 
   def GetFromCMD(self, username):
-    self.user_data = self.cluster.get_by_name(username, 'User')
+    self.user_data = EmPyreAI.EmpireAPI.CMSH_Cluster.get_by_name(username, 'User')
     if self.user_data == None:
       self.exists = False
       return False
