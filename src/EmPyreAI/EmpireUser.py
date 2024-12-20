@@ -27,8 +27,9 @@
 
 import os
 import pwd
-from pythoncm.cluster import Cluster
-from pythoncm.settings import Settings
+#from pythoncm.cluster import Cluster
+#from pythoncm.settings import Settings
+import EmPyreAI.EmpireAPI
 from pythoncm.entity import User
 import getpass
 import json
@@ -44,21 +45,6 @@ class EmpireUser:
   #region Constructors
   def __init__(self, username, load=True, cluster=None):
     """Initialize an EmpireUser instance for the specified username."""
-    if cluster == None:
-        if getpass.getuser() != "root":
-          cmd_settings = Settings(
-              host="alpha-mgr",
-              port=8081,
-              cert_file=f'/mnt/home/{getpass.getuser()}/.empireai/cmsh_api.pem',
-              key_file=f'/mnt/home/{getpass.getuser()}/.empireai/cmsh_api.key',
-              ca_file='/usr/lib64/python3.9/site-packages/pythoncm/etc/cacert.pem'
-          )
-          self.cluster = Cluster(cmd_settings)
-        else:
-          self.cluster = Cluster()
-    else:
-       self.cluster = cluster
-    
     if load:
       self.GetFromCMD(username)
   #endregion 
@@ -66,42 +52,15 @@ class EmpireUser:
   #region Static Methods
   @staticmethod
   def Exists(username):
-    cluster = None
-    if getpass.getuser() != "root":
-      cmd_settings = Settings(
-        host="alpha-mgr",
-        port=8081,
-        cert_file=f'/mnt/home/{getpass.getuser()}/.empireai/cmsh_api.pem',
-        key_file=f'/mnt/home/{getpass.getuser()}/.empireai/cmsh_api.key',
-        ca_file='/usr/lib64/python3.9/site-packages/pythoncm/etc/cacert.pem'
-      )
-      cluster = Cluster(cmd_settings)
-    else:
-      cluster = Cluster()
-    
-    user_data = cluster.get_by_name(username, 'User')
-    cluster.disconnect()
+    user_data = EmPyreAI.EmpireAPI.CMSH_Cluster.get_by_name(username, 'User')
+    EmPyreAI.EmpireAPI.CMSH_Cluster.disconnect()
     if user_data == None:
       return False
-    
     return True
 
   @staticmethod
   def New(username):
-    cluster = None
-    if getpass.getuser() != "root":
-      cmd_settings = Settings(
-        host="alpha-mgr",
-        port=8081,
-        cert_file=f'/mnt/home/{getpass.getuser()}/.empireai/cmsh_api.pem',
-        key_file=f'/mnt/home/{getpass.getuser()}/.empireai/cmsh_api.key',
-        ca_file='/usr/lib64/python3.9/site-packages/pythoncm/etc/cacert.pem'
-      )
-      cluster = Cluster(cmd_settings)
-    else:
-      cluster = Cluster()
-    new_user = User(cluster)
-
+    new_user = User(EmPyreAI.EmpireAPI.CMSH_Cluster)
     new_user.name = username
     new_user.password = EUtils.GenPassword()
     new_user.homeDirectory = f"/mnt/home/{username}"
@@ -109,28 +68,14 @@ class EmpireUser:
     new_user.surName = 'User'
     new_user.notes = '{ "created_by": "' + getpass.getuser() + '", "created_at": "' + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '" }'
     commit_result = new_user.commit(wait_for_remote_update=True)
-    cluster.disconnect()
+    EmPyreAI.EmpireAPI.CMSH_Cluster.disconnect()
     if not commit_result.good:
       return False
-    
     return True
   
   @staticmethod
   def FetchAllUsers():
-    cluster = None
-    if getpass.getuser() != "root":
-      cmd_settings = Settings(
-        host="alpha-mgr",
-        port=8081,
-        cert_file=f'/mnt/home/{getpass.getuser()}/.empireai/cmsh_api.pem',
-        key_file=f'/mnt/home/{getpass.getuser()}/.empireai/cmsh_api.key',
-        ca_file='/usr/lib64/python3.9/site-packages/pythoncm/etc/cacert.pem'
-      )
-      cluster = Cluster(cmd_settings)
-    else:
-      cluster = Cluster()
-    
-    print(json.dumps(cluster.get_user_data()))
+    print(json.dumps(EmPyreAI.EmpireAPI.CMSH_Cluster.get_user_data()))
   #endregion
 
   #region Instance Methods

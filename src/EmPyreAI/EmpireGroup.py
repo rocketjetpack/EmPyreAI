@@ -22,8 +22,7 @@
 
 import os
 import pwd
-from pythoncm.cluster import Cluster
-from pythoncm.settings import Settings
+import EmPyreAI.EmpireAPI
 from pythoncm.entity import User
 import getpass
 import json
@@ -38,17 +37,6 @@ class EmpireGroup:
   #region Constructors
   def __init__(self, groupname):
     """Initialize an EmpireGroup instance for the specified group."""
-    if getpass.getuser() == "root":
-      self.cluster = Cluster()
-    else:
-      self.cmd_settings = Settings(
-        host="alpha-mgr",
-        port=8081,
-        cert_file=f'/mnt/home/{getpass.getuser()}/.empireai/cmsh_api.pem',
-        key_file=f'/mnt/home/{getpass.getuser()}/.empireai/cmsh_api.key',
-        ca_file='/usr/lib64/python3.9/site-packages/pythoncm/etc/cacert.pem'
-      )
-      self.cluster = Cluster(self.cmd_settings)
     self.exists = False
     self.GetFromCMD(groupname)
   #endregion 
@@ -56,19 +44,10 @@ class EmpireGroup:
   #region Static Methods
   @staticmethod
   def Exists(groupname):
-    cmd_settings = Settings(
-      host="alpha-mgr",
-      port=8081,
-      cert_file=f'/mnt/home/{getpass.getuser()}/.empireai/cmsh_api.pem',
-      key_file=f'/mnt/home/{getpass.getuser()}/.empireai/cmsh_api.key',
-      ca_file='/usr/lib64/python3.9/site-packages/pythoncm/etc/cacert.pem'
-    )
-    cluster = Cluster(cmd_settings)
-    group_data = cluster.get_by_name(groupname, 'Group')
-    cluster.disconnect()
+    group_data = EmPyreAI.EmpireAPI.CMSH_Cluster.get_by_name(groupname, 'Group')
+    EmPyreAI.EmpireAPI.CMSH_Cluster.disconnect()
     if group_data == None:
       return False
-    
     return True
   #endregion
 
@@ -79,7 +58,7 @@ class EmpireGroup:
     gid = pwd.getpwnam(getpass.getuser()).pw_gid
     user_groups.append(grp.getgrgid(gid).gr_name)
     
-    self.group_data = self.cluster.get_by_name(groupname, 'Group')
+    self.group_data = EmPyreAI.EmpireAPI.CMSH_Cluster.get_by_name(groupname, 'Group')
     if self.group_data == None:
       self.exists = False
       return False
@@ -98,7 +77,6 @@ class EmpireGroup:
 
     if self.name not in user_groups:
       return False
-    
     return True
 
   def Commit(self):
