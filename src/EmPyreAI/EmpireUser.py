@@ -42,7 +42,7 @@ import pwd
 
 class EmpireUser:
   #region Constructors
-  def __init__(self, username):
+  def __init__(self, username, load=True):
     """Initialize an EmpireUser instance for the specified username."""
     if getpass.getuser() != "root":
       cmd_settings = Settings(
@@ -57,7 +57,9 @@ class EmpireUser:
       self.cluster = Cluster()
     
     self.exists = False
-    self.GetFromCMD(username)
+
+    if load:
+      self.GetFromCMD(username)
   #endregion 
 
   #region Static Methods
@@ -131,6 +133,9 @@ class EmpireUser:
   #endregion
 
   #region Instance Methods
+  def LoadFromJSON(self, jsonData):
+    self.user_data = jsonData
+
   def AddToGroup(self, groupname, force=False):
     group = EmpireGroup(groupname)
     return group.AddMember(self.username, force=force)
