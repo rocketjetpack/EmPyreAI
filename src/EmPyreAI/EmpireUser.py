@@ -134,10 +134,7 @@ class EmpireUser:
     self.notes = notes
     result = self.Commit()
 
-    if not result.good:
-      return False
-    
-    return True
+    return result
   #endregion
 
   #region Getters, Setters, and property definitions
