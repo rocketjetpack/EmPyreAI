@@ -42,22 +42,23 @@ import pwd
 
 class EmpireUser:
   #region Constructors
-  def __init__(self, username, load=True):
+  def __init__(self, username, load=True, cluster=None):
     """Initialize an EmpireUser instance for the specified username."""
-    if getpass.getuser() != "root":
-      cmd_settings = Settings(
-        host="alpha-mgr",
-        port=8081,
-        cert_file=f'/mnt/home/{getpass.getuser()}/.empireai/cmsh_api.pem',
-        key_file=f'/mnt/home/{getpass.getuser()}/.empireai/cmsh_api.key',
-        ca_file='/usr/lib64/python3.9/site-packages/pythoncm/etc/cacert.pem'
-      )
-      self.cluster = Cluster(cmd_settings)
+    if cluster == None:
+        if getpass.getuser() != "root":
+          cmd_settings = Settings(
+              host="alpha-mgr",
+              port=8081,
+              cert_file=f'/mnt/home/{getpass.getuser()}/.empireai/cmsh_api.pem',
+              key_file=f'/mnt/home/{getpass.getuser()}/.empireai/cmsh_api.key',
+              ca_file='/usr/lib64/python3.9/site-packages/pythoncm/etc/cacert.pem'
+          )
+          self.cluster = Cluster(cmd_settings)
+        else:
+          self.cluster = Cluster()
     else:
-      self.cluster = Cluster()
+       self.cluster = cluster
     
-    self.exists = False
-
     if load:
       self.GetFromCMD(username)
   #endregion 
