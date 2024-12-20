@@ -120,7 +120,6 @@ class EmpireUser:
     notes["last_modified"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     notes["last_modified_by"] = getpass.getuser()
     self.notes = notes
-    print(f"Committing notes {self.notes} for {self.username}")
     result = self.user_data.commit()
     if result.good:
       return True
