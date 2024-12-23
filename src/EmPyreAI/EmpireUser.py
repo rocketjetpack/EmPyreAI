@@ -33,6 +33,7 @@ import EmPyreAI.EmpireAPI
 from pythoncm.entity import User
 import getpass
 import json
+import EmPyreAI.EmpireAPI
 import EmPyreAI.EmpireUtils as EUtils
 from EmPyreAI.EmpireGroup import EmpireGroup
 from EmPyreAI.EmpireSlurm import EmpireSlurm
@@ -60,7 +61,7 @@ class EmpireUser:
 
   @staticmethod
   def New(username):
-    new_user = User(EmPyreAI.EmpireAPI.CMSH_Cluster)
+    new_user = User()
     new_user.name = username
     new_user.password = EUtils.GenPassword()
     new_user.homeDirectory = f"/mnt/home/{username}"

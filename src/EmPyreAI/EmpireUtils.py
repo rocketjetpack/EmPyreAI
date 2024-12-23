@@ -21,6 +21,9 @@ def PromptConfirm(message=None):
 def CheckAPI():
     """This utility function verifies that the required API access keys are present."""
     username = getpass.getuser()
+    if username == "root":
+        return True
+    
     # Confirm that the required certificate files exist
     if os.path.exists(f"/mnt/home/{username}/.empireai/cmsh_api.key"):
         if os.path.exists(f"/mnt/home/{username}/.empireai/cmsh_api.pem"):
