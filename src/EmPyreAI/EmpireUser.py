@@ -27,13 +27,15 @@
 
 import os
 import pwd
-from pythoncm.cluster import Cluster
-from pythoncm.settings import Settings
+#from pythoncm.cluster import Cluster
+#from pythoncm.settings import Settings
+import EmPyreAI.EmpireAPI
 from pythoncm.entity import User
 import getpass
 import json
 import EmPyreAI.EmpireUtils as EUtils
 from EmPyreAI.EmpireGroup import EmpireGroup
+from EmPyreAI.EmpireSlurm import EmpireSlurm
 import re
 from datetime import datetime
 import grp
@@ -41,50 +43,24 @@ import pwd
 
 class EmpireUser:
   #region Constructors
-  def __init__(self, username):
+  def __init__(self, username, load=True):
     """Initialize an EmpireUser instance for the specified username."""
-    self.cmd_settings = Settings(
-      host="alpha-mgr",
-      port=8081,
-      cert_file=f'/mnt/home/{getpass.getuser()}/.empireai/cmsh_api.pem',
-      key_file=f'/mnt/home/{getpass.getuser()}/.empireai/cmsh_api.key',
-      ca_file='/usr/lib64/python3.9/site-packages/pythoncm/etc/cacert.pem'
-    )
-    self.cluster = Cluster(self.cmd_settings)
-    self.exists = False
-    self.GetFromCMD(username)
+    if load:
+      self.GetFromCMD(username)
   #endregion 
 
   #region Static Methods
   @staticmethod
   def Exists(username):
-    cmd_settings = Settings(
-      host="alpha-mgr",
-      port=8081,
-      cert_file=f'/mnt/home/{getpass.getuser()}/.empireai/cmsh_api.pem',
-      key_file=f'/mnt/home/{getpass.getuser()}/.empireai/cmsh_api.key',
-      ca_file='/usr/lib64/python3.9/site-packages/pythoncm/etc/cacert.pem'
-    )
-    cluster = Cluster(cmd_settings)
-    user_data = cluster.get_by_name(username, 'User')
-    cluster.disconnect()
+    user_data = EmPyreAI.EmpireAPI.CMSH_Cluster.get_by_name(username, 'User')
+    EmPyreAI.EmpireAPI.CMSH_Cluster.disconnect()
     if user_data == None:
       return False
-    
     return True
 
   @staticmethod
   def New(username):
-    cmd_settings = Settings(
-      host="alpha-mgr",
-      port=8081,
-      cert_file=f'/mnt/home/{getpass.getuser()}/.empireai/cmsh_api.pem',
-      key_file=f'/mnt/home/{getpass.getuser()}/.empireai/cmsh_api.key',
-      ca_file='/usr/lib64/python3.9/site-packages/pythoncm/etc/cacert.pem'
-    )
-    cluster = Cluster(cmd_settings)
-    new_user = User(cluster)
-
+    new_user = User(EmPyreAI.EmpireAPI.CMSH_Cluster)
     new_user.name = username
     new_user.password = EUtils.GenPassword()
     new_user.homeDirectory = f"/mnt/home/{username}"
@@ -92,14 +68,20 @@ class EmpireUser:
     new_user.surName = 'User'
     new_user.notes = '{ "created_by": "' + getpass.getuser() + '", "created_at": "' + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '" }'
     commit_result = new_user.commit(wait_for_remote_update=True)
-    cluster.disconnect()
+    EmPyreAI.EmpireAPI.CMSH_Cluster.disconnect()
     if not commit_result.good:
       return False
-    
     return True
+  
+  @staticmethod
+  def FetchAllUsers():
+    print(json.dumps(EmPyreAI.EmpireAPI.CMSH_Cluster.get_user_data()))
   #endregion
 
   #region Instance Methods
+  def LoadFromJSON(self, jsonData):
+    self.user_data = jsonData
+
   def AddToGroup(self, groupname, force=False):
     group = EmpireGroup(groupname)
     return group.AddMember(self.username, force=force)
@@ -124,19 +106,19 @@ class EmpireUser:
     return True
 
   def GetFromCMD(self, username):
-    self.user_data = self.cluster.get_by_name(username, 'User')
+    self.user_data = EmPyreAI.EmpireAPI.CMSH_Cluster.get_by_name(username, 'User')
     if self.user_data == None:
       self.exists = False
       return False
     else:
       self.exists = True
 
+
   def Commit(self):
     """Commit changes to Base Command"""
     notes = self.notes
     notes["last_modified"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     notes["last_modified_by"] = getpass.getuser()
-    
     self.notes = notes
     result = self.user_data.commit()
     if result.good:
@@ -149,12 +131,9 @@ class EmpireUser:
     notes = self.notes
     notes[key] = value
     self.notes = notes
-    result = self.user_data.commit()
+    result = self.Commit()
 
-    if not result.good:
-      return False
-    
-    return True
+    return result
   #endregion
 
   #region Getters, Setters, and property definitions
@@ -170,6 +149,22 @@ class EmpireUser:
     else:
       return None
   
+  #region PI Property
+  def GetPI(self):
+    if "pi" in self.notes:
+      return self.notes["pi"]
+  
+  def SetPI(self, value):
+    if "pi" in self.notes:
+      self.notes["pi"] = value
+      self.Commit()
+    else:
+      self.AppendNote("pi", value)
+      self.Commit()
+
+  pi = property(GetPI, SetPI)
+  #endregion
+
   #region Username Property
   def GetUsername(self):
     return self.user_data.name
