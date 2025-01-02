@@ -42,9 +42,9 @@ from datetime import datetime
 import grp
 import sys
 import pwd
+import jinja2
 
 class EmpireUser:
-  
   #region Constructors
   def __init__(self, username, load=True):
     """Initialize an EmpireUser instance for the specified username."""
@@ -84,6 +84,33 @@ class EmpireUser:
   #endregion
 
   #region Instance Methods
+  def SendWelcomeEmail(self):
+    import smtplib
+    from email.mime.text import MIMEText
+    from email.mime.multipart import MIMEMultipart
+
+    environment = jinja2.Environment(loader=jinja2.FilesystemLoader("/opt/EmpireAI-Tools/templates"))
+    template = environment.get_template("new_user_email.template")
+    content = template.render(firstname=self.firstname, username=self.username, institution=self.institution)
+    smtp_server = "alpha-mgr"
+    smtp_port = 25
+    from_email = "help@empire-ai.org"
+    to_email = self.email
+    subject = "Empire AI Alpha Account Creation Notice"
+
+    message = MIMEMultipart("alternative")
+    message["From"] = from_email
+    message["To"] = to_email
+    message["Subject"] = subject
+    mime_text = MIMEText(content, "html")
+    message.attach(mime_text)
+    try:
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.sendmail(from_email, to_email, message.as_string())
+        print(f"[\033[32m SUCCESS\033[0m ] Sent a welcome email to {self.email}.")
+    except Exception as e:
+        print(f"[\033[31m ERROR\033[0m ] Failed to send a welcome email to {self.email}. Error details: {e}.")
+
   def LoadFromJSON(self, jsonData):
     self.user_data = jsonData
 
@@ -154,6 +181,16 @@ class EmpireUser:
     else:
       return None
   
+  #region Institution Property
+  def GetInstitution(self):
+    if self.notes["institution"] != None:
+      return self.notes["institution"]
+    else:
+      return None
+    
+  institution = property(GetInstitution)
+  #endregion
+
   #region PI Property
   def GetPI(self):
     if "pi" in self.notes:
