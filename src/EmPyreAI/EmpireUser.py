@@ -89,7 +89,7 @@ class EmpireUser:
     from email.mime.text import MIMEText
     from email.mime.multipart import MIMEMultipart
 
-    environment = jinja2.Environment(loader=jinja2.FilesystemLoader("/opt/EmpireAI-Tools/templates"))
+    environment = jinja2.Environment(loader=jinja2.FileSystemLoader("/opt/EmpireAI-Tools/templates"))
     template = environment.get_template("new_user_email.template")
     content = template.render(firstname=self.firstname, username=self.username, institution=self.institution)
     smtp_server = "alpha-mgr"
