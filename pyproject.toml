@@ -1,6 +1,6 @@
 [project]
 name = "EmPyreAI"
-version = "1.4.2"
+version = "1.4.3"
 authors = [
   { name="Kali McLennan", email="help@empire-ai.org" }
 ]

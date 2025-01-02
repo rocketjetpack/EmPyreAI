@@ -188,7 +188,13 @@ class EmpireUser:
     else:
       return None
     
-  institution = property(GetInstitution)
+  def SetInstitution(self, value):
+    notes = self.notes
+    notes["institution"] = value
+    self.notes = notes
+    result = self.Commit()
+
+  institution = property(GetInstitution, SetInstitution)
   #endregion
 
   #region PI Property
