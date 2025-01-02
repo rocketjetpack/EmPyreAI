@@ -133,4 +133,5 @@ class EmpireGroup:
     return self.group_data.members
 
   members = property(GetMembers)
-  #endregion 
+  #endregion
+  

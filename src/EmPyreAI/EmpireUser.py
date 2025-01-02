@@ -33,16 +33,18 @@ import EmPyreAI.EmpireAPI
 from pythoncm.entity import User
 import getpass
 import json
-import EmPyreAI.EmpireAPI
 import EmPyreAI.EmpireUtils as EUtils
+import EmPyreAI.EmpireAPI
 from EmPyreAI.EmpireGroup import EmpireGroup
 from EmPyreAI.EmpireSlurm import EmpireSlurm
 import re
 from datetime import datetime
 import grp
+import sys
 import pwd
 
 class EmpireUser:
+  
   #region Constructors
   def __init__(self, username, load=True):
     """Initialize an EmpireUser instance for the specified username."""
@@ -54,25 +56,27 @@ class EmpireUser:
   @staticmethod
   def Exists(username):
     user_data = EmPyreAI.EmpireAPI.CMSH_Cluster.get_by_name(username, 'User')
-    EmPyreAI.EmpireAPI.CMSH_Cluster.disconnect()
+    #EmPyreAI.EmpireAPI.CMSH_Cluster.disconnect()
     if user_data == None:
       return False
     return True
 
-  @staticmethod
-  def New(username):
-    new_user = User()
-    new_user.name = username
-    new_user.password = EUtils.GenPassword()
-    new_user.homeDirectory = f"/mnt/home/{username}"
-    new_user.commonName = 'New'
-    new_user.surName = 'User'
-    new_user.notes = '{ "created_by": "' + getpass.getuser() + '", "created_at": "' + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '" }'
-    commit_result = new_user.commit(wait_for_remote_update=True)
-    EmPyreAI.EmpireAPI.CMSH_Cluster.disconnect()
-    if not commit_result.good:
+  def Add(self, userData):
+    self.user_data = EmPyreAI.EmpireAPI.CMSH_Cluster.get_by_name(userData['username'], 'User')
+    if self.user_data != None:
       return False
-    return True
+    
+    self.user_data = User(EmPyreAI.EmpireAPI.CMSH_Cluster)
+    self.user_data.name = userData["username"]
+    self.user_data.password = EUtils.GenPassword()
+    self.user_data.email = userData["email"]
+    self.user_data.homeDirectory = f"/mnt/home/{userData['username']}"
+    self.user_data.commonName = userData["commonName"]
+    self.user_data.surname = userData["surname"]
+    self.user_data.notes = '{ "created_by": "' + getpass.getuser() + '", "created_at": "' + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '" }'
+
+    commit_result = self.Commit()
+    return commit_result      
   
   @staticmethod
   def FetchAllUsers():
