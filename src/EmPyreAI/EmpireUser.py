@@ -8,10 +8,17 @@
 #   - phone = (get|set) Returns or sets the "phone" key of the notes field
 #   - email = (get|set) Returns or sets the email of the account
 #   - project = (get|set) Returns or sets the "project" key of the notes field
+#   - uid = (get) Returns the UID of the user
+#   - groups = (get|set) Returns or sets a list of EmpireGroup objects representing POSIX group membership
+#
+# Notes:
+#   When the notes property is interacted with it should detect absent or malformed notes
+#   and attempt to correct the format of the notes or generate a new minimal-content
+#   set of notes. Users created early in the Alpha system do not have PI affiliation,
+#   project affiliation, and some have no notes at all.
 #
 # Static Functions:
 #   - Exists(): Returns bool. True if the user exists, False if it does not.
-#   - New(): Returns bool. Creates a new stub user in Base Command.
 #
 # Class Functions:
 #   - GetFromCMD(): Loads user data from the Base Command API into the user_data variable. Returns (bool)
@@ -25,296 +32,326 @@
 #
 # Author: Kali McLennan (Flatiron Institute) - kmclennan@flatironinstitute.org
 
-import os
-import pwd
-#from pythoncm.cluster import Cluster
-#from pythoncm.settings import Settings
-import EmPyreAI.EmpireAPI
+import EmPyreAI.EmpireAPI as E_API
+import EmPyreAI.EmpireUtils as E_Utils
 from pythoncm.entity import User
 import getpass
-import json
-import EmPyreAI.EmpireUtils as EUtils
-import EmPyreAI.EmpireAPI
-from EmPyreAI.EmpireGroup import EmpireGroup
-from EmPyreAI.EmpireSlurm import EmpireSlurm
-import re
 from datetime import datetime
-import grp
-import sys
-import pwd
-import jinja2
+import json
+import re
 
 class EmpireUser:
-  #region Constructors
-  def __init__(self, username, load=True):
-    """Initialize an EmpireUser instance for the specified username."""
-    if load:
-      self.GetFromCMD(username)
-  #endregion 
+    @staticmethod
+    def Exists(username: str):
+        """Use the pythoncm API (represented as EmPyreAI.EmpireAPI/E_API) to determine if there is a User object
+        matching the supplied username.
+        Input:
+          - username: string
+        Return:
+          - True if the user exists
+          - False if the user does not exist
+        """
+        user_data = E_API.CMSH_Cluster.get_by_name(username, 'User') # Ask BaseCommand for the User object with the supplied username
+        if user_data == None:
+            return False
+        return True
 
-  #region Static Methods
-  @staticmethod
-  def Exists(username):
-    user_data = EmPyreAI.EmpireAPI.CMSH_Cluster.get_by_name(username, 'User')
-    #EmPyreAI.EmpireAPI.CMSH_Cluster.disconnect()
-    if user_data == None:
-      return False
-    return True
+#region Static Methods
+    @staticmethod
+    def New(username: str):
+        retVal = User(E_API.CMSH_Cluster)
+        retVal.name = username
+        retVal.password = E_Utils.GenPassword(28)
+        retVal.homeDirectory = f"/mnt/home/{username}"
+        retVal.loginShell = "/bin/bash"
+        creationTime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        retVal.notes = f'{ "created_by": "{getpass.getuser()}", "created_at": "{creationTime}"}'
+        return retVal
+#endregion
 
-  def Add(self, userData):
-    self.user_data = EmPyreAI.EmpireAPI.CMSH_Cluster.get_by_name(userData['username'], 'User')
-    if self.user_data != None:
-      return False
+#region Constructor
+    def __init__(self, username: str):
+        if EmpireUser.Exists(username) == True:
+            self.UserData = E_API.CMSH_Cluster.get_by_name(username, 'User')
+            self.Committed = True
+        else:
+            E_Utils.Warning(f"A request was made to load user data from CMSH for username {username} but this user does not exist. Creating a new user.")
+            self.UserData = User(E_API.CMSH_Cluster)
+            self.UserData.name = username
+            self.UserData.homeDirectory = f"/mnt/home/{username}"
+            self.UserData.loginShell = "/bin/bash"
+            creationData = {}
+            creationData["created_by"] = getpass.getuser()
+            creationData["created_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            self.UserData.notes = json.dumps(creationData)
+            self.Committed = False     
+#endregion
+
+#region Class Methods
+    def Commit(self, force: bool = False):
+        """Commit any pending changes to this object via the pythoncm API.
+        Input:
+          - None
+        Return:
+          - True if the commit is successful
+          - False if it is unsuccessful
+        """
+        if self.Committed == True and force == False:
+            E_Utils.Warning(f"Commit called on user named {self.Username} but no modifications have been made that require committing.")
+            return True
+        
+        if self.UserData.commonName == None or len(self.UserData.commonName) == 0:
+            E_Utils.Error(f"Attempting to commit a user object that has no commonName defined. Aborting!")
+            return False
+        
+        if self.UserData.surname == None or len(self.UserData.surname) == 0:
+            E_Utils.Error(f"Attempting to commit a user object that has no surname defined. Aborting!")
+            return False
+        
+        if self.UserData.email == None or len(self.UserData.email) == 0:
+            E_Utils.Error(f"Attempting to commit a user object that has no email defined. Aborting!")
+            return False
+        
+        notes = self.Notes
+        notes["last_modified_by"] = getpass.getuser() # Store who committed the last change to this object
+        notes["last_modified"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S") # Store the current time as the last modification time
+        self.Notes = notes
+        result = self.UserData.commit()
+        if result.good:
+            self.Committed = True
+            return True
+        return False
     
-    self.user_data = User(EmPyreAI.EmpireAPI.CMSH_Cluster)
-    self.user_data.name = userData["username"]
-    self.user_data.password = EUtils.GenPassword()
-    self.user_data.email = userData["email"]
-    self.user_data.homeDirectory = f"/mnt/home/{userData['username']}"
-    self.user_data.commonName = userData["commonName"]
-    self.user_data.surname = userData["surname"]
-    self.user_data.notes = '{ "created_by": "' + getpass.getuser() + '", "created_at": "' + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '" }'
-
-    commit_result = self.Commit()
-    return commit_result      
-  
-  @staticmethod
-  def FetchAllUsers():
-    print(json.dumps(EmPyreAI.EmpireAPI.CMSH_Cluster.get_user_data()))
-  #endregion
-
-  #region Instance Methods
-  def SendWelcomeEmail(self):
-    import smtplib
-    from email.mime.text import MIMEText
-    from email.mime.multipart import MIMEMultipart
-
-    environment = jinja2.Environment(loader=jinja2.FileSystemLoader("/opt/EmpireAI-Tools/templates"))
-    template = environment.get_template("new_user_email.template")
-    content = template.render(firstname=self.firstname, username=self.username, institution=self.institution)
-    smtp_server = "alpha-mgr"
-    smtp_port = 25
-    from_email = "help@empire-ai.org"
-    to_email = self.email
-    subject = "Empire AI Alpha Account Creation Notice"
-
-    message = MIMEMultipart("alternative")
-    message["From"] = from_email
-    message["To"] = to_email
-    message["Subject"] = subject
-    mime_text = MIMEText(content, "html")
-    message.attach(mime_text)
-    try:
-        with smtplib.SMTP(smtp_server, smtp_port) as server:
-            server.sendmail(from_email, to_email, message.as_string())
-        print(f"[\033[32m SUCCESS\033[0m ] Sent a welcome email to {self.email}.")
-    except Exception as e:
-        print(f"[\033[31m ERROR\033[0m ] Failed to send a welcome email to {self.email}. Error details: {e}.")
-
-  def LoadFromJSON(self, jsonData):
-    self.user_data = jsonData
-
-  def AddToGroup(self, groupname, force=False):
-    group = EmpireGroup(groupname)
-    return group.AddMember(self.username, force=force)
-
-  def RandomizePassword(self, length=14):
-    new_password = EUtils.GenPassword(length)
-    self.user_data.password = new_password
-    if self.Commit():
-      return new_password
-    else:
-      return None
-
-  def SetUserData(self, data):
-    """Commit a set of new user data without prompting for each change."""
-    # data should be a list of key=>value entries conforming to the expected values of Base Command
-    for key, value in data.items():
-      self.user_data[f"{key}"] = value
-
-    if not self.Commit():
-      return False
+    def RandomizePassword(self, length: int = 14):
+        """Generate a new password for this user.
+        Input:
+          - length: integer representing how long the generated password should be
+        Return:
+          - str: the plain-text generated password if the Commit() call succeeds
+          - None: if the Commit() call fails
+        """
+        new_password = E_Utils.GenPassword(length)
+        self.UserData.password = new_password
+        if self.Commit():
+            return new_password
+        return None
     
-    return True
+    def SetNote(self, key: str, value: str):
+        """Set the value of a particular note.
+        Input:
+          - key: str representing the name of the note
+          - value: str representing the value of the note
+        Return:
+          - None
+        """
+        notes = self.Notes
+        notes[key] = value
+        self.Notes = notes
 
-  def GetFromCMD(self, username):
-    self.user_data = EmPyreAI.EmpireAPI.CMSH_Cluster.get_by_name(username, 'User')
-    if self.user_data == None:
-      self.exists = False
-      return False
-    else:
-      self.exists = True
+    def SendWelcomeEmail(self):
+        import smtplib
+        from email.mime.text import MIMEText
+        from email.mime.multipart import MIMEMultipart
+        import jinja2
 
+        environment = jinja2.Environment(loader=jinja2.FileSystemLoader("/opt/EmpireAI-Tools/templates"))
+        template = environment.get_template("new_user_email.template")
+        content = template.render(firstname=self.FirstName, username=self.Username, institution=self.Institution)
+        smtp_server = "alpha-mgr"
+        smtp_port = 25
+        from_email = "help@empire-ai.org"
+        to_email = self.Email
+        subject = "Empire AI Alpha Account Creation Notice"
 
-  def Commit(self):
-    """Commit changes to Base Command"""
-    notes = self.notes
-    notes["last_modified"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    notes["last_modified_by"] = getpass.getuser()
-    self.notes = notes
-    result = self.user_data.commit()
-    if result.good:
-      return True
-    else:
-      return False
+        message = MIMEMultipart("alternative")
+        message["From"] = from_email
+        message["To"] = to_email
+        message["Subject"] = subject
+        mime_text = MIMEText(content, "html")
+        message.attach(mime_text)
+        try:
+            with smtplib.SMTP(smtp_server, smtp_port) as server:
+                server.sendmail(from_email, to_email, message.as_string())
+            print(f"[\033[32m SUCCESS\033[0m ] Sent a welcome email to {self.Email}.")
+        except Exception as e:
+            print(f"[\033[31m ERROR\033[0m ] Failed to send a welcome email to {self.Email}. Error details: {e}.")
+#endregion 
+
+#region Class Properties (Getters and Setters)
+    def GetPhone(self):
+        notes = self.Notes
+        if "phone" in notes.keys():
+            return notes["phone"]
+        return None
     
-  def AppendNote(self, key, value):
-    """Add a new field to the notes for this user."""
-    notes = self.notes
-    notes[key] = value
-    self.notes = notes
-    result = self.Commit()
-
-    return result
-  #endregion
-
-  #region Getters, Setters, and property definitions
-  def GetPhone(self):
-    if self.notes["phone"] != None:
-      return self.notes["phone"]
-    else:
-      return None
+    def SetPhone(self, value):
+        self.SetNote("phone", value)
+        self.Committed = False
     
-  def GetProject(self):
-    if self.notes["project"] != None:
-      return self.notes["project"]
-    else:
-      return None
-  
-  #region Institution Property
-  def GetInstitution(self):
-    if self.notes["institution"] != None:
-      return self.notes["institution"]
-    else:
-      return None
+    Phone = property(GetPhone, SetPhone)
+
+    def GetInstitution(self):
+        notes = self.Notes
+        if "institution" in notes.keys():
+            return notes["institution"]
+        return None
     
-  def SetInstitution(self, value):
-    notes = self.notes
-    notes["institution"] = value
-    self.notes = notes
-    result = self.Commit()
+    def SetInstitution(self, value):
+        self.SetNote("institution", value)
+        self.Committed = False
 
-  institution = property(GetInstitution, SetInstitution)
-  #endregion
+    Institution = property(GetInstitution, SetInstitution)
 
-  #region PI Property
-  def GetPI(self):
-    if "pi" in self.notes:
-      return self.notes["pi"]
-  
-  def SetPI(self, value):
-    if "pi" in self.notes:
-      self.notes["pi"] = value
-      self.Commit()
-    else:
-      self.AppendNote("pi", value)
-      self.Commit()
+    def GetPI(self):
+        notes = self.notes
+        if "pi" in notes.keys():
+            return notes["pi"]
+        return None
+    
+    def SetPI(self, value):
+        self.SetNote("pi", value)
+        self.Committed = False
 
-  pi = property(GetPI, SetPI)
-  #endregion
+    PI = property(GetPI, SetPI)
 
-  #region Username Property
-  def GetUsername(self):
-    return self.user_data.name
-  
-  username = property(GetUsername)
-  #endregion
-  
-  #region First and Last Name Properties
-  def GetFirstName(self):
-    return self.user_data.commonName
-  
-  def SetFirstname(self, value):
-    if EUtils.PromptConfirm(f"Commit change of firstname from {self.user_data.commonName} to {value}? (Y/N)"):
-      self.user_data.commonName = value
-      self.Commit()
-    else:
-      print("Aborting change of first name.")
-  
-  def GetLastName(self):
-    return self.user_data.surname
-  
-  def SetLastName(self, value):
-    if EUtils.PromptConfirm(f"Commit change of lastname from {self.user_data.surname} to {value}? (Y/N)"):
-      self.user_data.surname = value
-    else:
-      print("Aborting change of last name.")
+    def GetUID(self):
+        return self.UserData.ID
+    
+    ID = property(GetUID)
 
-  lastname = property(GetLastName, SetLastName)
-  firstname = property(GetFirstName, SetFirstname)
-  #endregion 
+    def GetUsername(self):
+        return self.UserData.name
+    
+    Username = property(GetUsername)
 
-  #region Notes Properties
-  def GetNotes(self):
-    if len(self.user_data.notes) == 0:
-      return {}
+    def GetFirstname(self):
+        return self.UserData.commonName
+    
+    def SetFirstname(self, value):
+        self.UserData.commonName = value
+        self.Committed = False
 
-    try:
-      retVal = json.loads(self.user_data.notes)    
-      return retVal
-    except:
-      return False
+    FirstName = property(GetFirstname, SetFirstname)
 
-  
-  def SetNotes(self, value):
-    try:
-      self.user_data.notes = json.dumps(value)
-    except:
-      notes = {}
-      notes["other"] = value
-      self.user_data.notes = json.dumps(notes)
+    def GetLastname(self):
+        return self.UserData.surname
+    
+    def SetLastname(self, value):
+        self.UserData.surname = value
+        self.Committed = False
+    
+    LastName = property(GetLastname, SetLastname)
 
-  notes = property(GetNotes, SetNotes)
-  #endregion
+    def GetFullname(self):
+        return f"{self.FirstName} {self.LastName}"
+    
+    FullName = property(GetFullname)
 
-  #region Phone Property
-  def GetPhone(self):
-    try:
-      return self.notes["phone"]
-    except:
-      return None
-  
-  def SetPhone(self, value):
-    if EUtils.PromptConfirm(f"Commit change of phone number to {value} for user {self.user_data.name}? (Y/N)"):
-      try:
-        data = self.notes
-        data["phone"] = value
-        self.notes = data
-        self.Commit()
-      except:
-        print(f"Failed to set a phone number for {self.user_data.name}")
-    else:
-      print("User cancelled the request.")
+    def GetEmail(self):
+        return self.UserData.email
+    
+    def SetEmail(self, value):
+        email_regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b'
+        if (re.fullmatch(email_regex, value)):
+            self.UserData.email = value
+            self.Committed = False
+        else:
+            E_Utils.Error(f"Attempted to set an invalid email address ({value}) for user {self.UserData.name}. Aborting.")
 
-  phone = property(GetPhone, SetPhone)
-  #endregion
+    Email = property(GetEmail, SetEmail)
 
-  #region Email Property
-  def GetEmail(self):
-    return self.user_data.email
-  
-  def SetEmail(self, value):
-    email_regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b'
-    if (re.fullmatch(email_regex, value)):
-      if EUtils.PromptConfirm(f"Commit change of email to {value} for user {self.user_data.name}? (Y/N)"):
-        self.user_data.email = value
-        self.Commit()
-      else:
-        print("User cancelled the request.")
-    else:
-      print(f"{value} is not a valid email address. Aborting.")
+    def GetGroups(self):
+        retVal = [g.gr_name for g in grp.getgrall() if self.username in g.gr_mem]
+        gid = pwd.getpwnam(self.UserData.username).pw_gid
+        retVal.append(grp.getgrgid(gid).gr_name)
+        return retVal
+    
+    Groups = property(GetGroups)
 
-  email = property(GetEmail, SetEmail)
-  project = property(GetProject)
-  #endregion
-  
-  #region Groups Property
-  def GetGroups(self):
-    # use pwd and grp modules as they are SIGNIFICANTLY faster than looping objects in pythoncm
-    self.groups = [g.gr_name for g in grp.getgrall() if self.username in g.gr_mem]
-    gid = pwd.getpwnam(self.username).pw_gid
-    self.groups.append(grp.getgrgid(gid).gr_name)
-    return self.groups
-  
-  groups = property(GetGroups)
-  #endregion
+    def GetNotes(self):
+        """Convert the User.notes field from pythoncm form JSON to a Python dict object and return it."""
+        if self.UserData.notes != None and len(self.UserData.notes) > 0:
+            try:
+                return json.loads(self.UserData.notes) # Attempt to decode the UserData.notes field from JSON to a dict and return it           
+            except Exception as e:
+                # If unable to decode UserData.notes as JSON then create a new dict and set the 'other' key to the existing notes for this user.
+                E_Utils.Error(f"Unable to decode notes for the user {self.username}. Adding any existing notes as the 'other' key and returning a valid data structure.")
+                userNotes = {}
+                userNotes["other"] = self.UserData.notes
+                self.UserData.notes = json.dumps(userNotes)
+                self.Commtted = False
+                return userNotes
+        else:
+            self.UserData.notes = "{}"
+            self.Committed = False
+            return {} # Return an empty dict
+
+    def SetNotes(self, notesDict):
+        try:
+            self.UserData.notes = json.dumps(notesDict)
+            self.Committed = False
+        except Exception as e:
+            E_Utils.Error("Failed to encode notes value as a JSON string. Recovering existing note data in the 'other' key.")
+            newNotes = {}
+            newNotes["other"] = str(notesDict)
+            self.UserData.notes = json.dumps(newNotes)
+            self.Committed = False
+    
+    
+    Notes = property(GetNotes, SetNotes)
+
+    def GetHomeDirectory(self):
+        return self.UserData.homeDirectory
+    
+    def SetHomeDirectory(self, value):
+        self.UserData.homeDirectory = value
+        self.Committed = False
+
+    HomeDirectory = property(GetHomeDirectory, SetHomeDirectory)
+
+    def GetShell(self):
+        return self.UserData.loginShell
+    
+    def SetShell(self, value):
+        self.UserData.loginShell = value
+        self.Committed = False
+    
+    Shell = property(GetShell, SetShell)
+
+    def GetLastModified(self):
+        if "last_modified" in self.Notes.keys() and "last_modified_by" in self.Notes.keys():
+            retVal = {}
+            retVal["date"] = self.Notes["last_modified"]
+            retVal["by"] = self.Notes["last_modified_by"]
+            return retVal
+        else:
+            E_Utils.Warning("Last modification information is missing. Populating it now.")
+            self.SetNote(key="last_modified", value=datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+            self.SetNote(key="last_modified_by", value=getpass.getuser())
+            self.Committed = False
+            retVal = {}
+            retVal["date"] = self.Notes["last_modified"]
+            retVal["by"] = self.Notes["last_modified_by"]
+            return retVal
+        
+    LastModified = property(GetLastModified)
+
+    def GetCreation(self):
+        if "created_at" in self.Notes.keys() and "created_by" in self.Notes.keys():
+            retVal = {}
+            retVal["date"] = self.Notes["created_at"]
+            retVal["by"] = self.Notes["created_by"]
+            return retVal
+        else:
+            E_Utils.Warning("Creation information is missing. Populating it now.")
+            self.SetNote(key="created_at", value="2024-01-01 00:00:00")
+            self.SetNote(key="created_by", value="unknown")
+            self.Committed = False
+            retVal = {}
+            retVal["date"] = self.Notes["created_at"]
+            retVal["by"] = self.Notes["created_by"]
+            return retVal
+            
+    Creation = property(GetCreation)
+
+#endregion
