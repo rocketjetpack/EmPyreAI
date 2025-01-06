@@ -32,6 +32,9 @@ def GenPassword(length=14):
 def Success(message):
     print(f"[\033[32m SUCCESS\033[0m ] {message}")
 
+def Notice(message):
+    print(f"[\033[32m NOTICE\033[0m ] {message}")
+
 def Warning(message):
     print(f"[\033[93m WARNING\033[0m ] {message}")
 
