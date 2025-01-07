@@ -49,14 +49,18 @@ class EmpireSlurm:
             "users": "slurmdb/" + self.config["apiVersion"] + "/users"
         }
         self.username = getpass.getuser()
+        self.ValidToken = True
         self.token = self.LoadToken()
         if self.token == None:
-            EUtils.Error(message="Unable to load Slurm API token from ~/.slurmtoken", fatal=True)
+            # Cannot load the token from the users home directory
+            EUtils.Error(message="Unable to load Slurm API token from ~/.slurmtoken", fatal=False)
+            self.ValidToken = False
 
         # Run a GET request for the diag endpoint to verify that the token is active and valid.
         self.endpoint = self.endpoints["diag"]
         getTest = self.Get()
         if getTest.status_code == 401:
+            # 401 error indicates the token has expired
             EUtils.Error(message="The token loaded from ~/.slurmtoken is no longer valid.", fatal=True)
             self.ValidToken = False
         self.AllUsers = None
