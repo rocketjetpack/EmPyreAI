@@ -92,7 +92,7 @@ class EmpireGroup:
     
   def AddMember(self, username, force=False):
     if force == False:
-      if EUtils.PromptConfirm(f"Add user \033[32m{username}\033[0m from the group \033[32m{self.name}\033[0m? (Y/N)"):
+      if EUtils.PromptConfirm(f"Add user \033[32m{username}\033[0m to the group \033[32m{self.name}\033[0m? (Y/N)"):
         self.group_data.members.append(username)
         return self.Commit()
     else:

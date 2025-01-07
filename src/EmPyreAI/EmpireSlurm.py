@@ -28,6 +28,7 @@ import os
 import pprint
 import sys
 from pathlib import Path
+import EmPyreAI.EmpireUtils as EUtils
 
 class EmpireSlurm:
     config = {
@@ -49,6 +50,15 @@ class EmpireSlurm:
         }
         self.username = getpass.getuser()
         self.token = self.LoadToken()
+        if self.token == None:
+            EUtils.Error(message="Unable to load Slurm API token from ~/.slurmtoken", fatal=True)
+
+        # Run a GET request for the diag endpoint to verify that the token is active and valid.
+        self.endpoint = self.endpoints["diag"]
+        getTest = self.Get()
+        if getTest.status_code == 401:
+            EUtils.Error(message="The token loaded from ~/.slurmtoken is no longer valid.", fatal=True)
+            self.ValidToken = False
         self.AllUsers = None
 
     def LoadToken(self):
@@ -91,6 +101,10 @@ class EmpireSlurm:
         pass
 
     def Get(self, additionalFields = ""):
+        if self.ValidToken == False:
+            EUtils.Error(message="Refusing to query the Slurm API due to an expired authentication token.")
+            return None
+        
         if self.token != None:
             if additionalFields != None:
                 url = f"{self.config['protocol']}://{self.config['apiServer']}:{self.config['port']}/{self.endpoint}/{additionalFields}"
