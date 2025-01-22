@@ -24,7 +24,7 @@
 
 import os
 import pickle
-import EmpireUtils as E_Utils
+import EmPyreAI.EmpireUtils as EUtils
 
 class EmpireProjectList:
     def __init__(self):
@@ -38,16 +38,16 @@ class EmpireProjectList:
                     self.Projects = pickle.load(file)
                     return True
                 except pickle.UnpicklingError as e:
-                    E_Utils.Error(f"(pickle error) Failed to load project data from {filePath}!")
+                    EUtils.Error(f"(pickle error) Failed to load project data from {filePath}!")
                     self.Projects = None
                     return False
                 except Exception as e:
-                    E_Utils.Error(f"Unhandled exception while attempting to load project data from {filePath}")
-                    E_Utils.Error(e)
+                    EUtils.Error(f"Unhandled exception while attempting to load project data from {filePath}")
+                    EUtils.Error(e)
                     self.Projects = None
                     return False
         else:
-            E_Utils.Warning(f"No file found at {filePath} to load project data from. Instantiating an empty list.")
+            EUtils.Warning(f"No file found at {filePath} to load project data from. Instantiating an empty list.")
             self.Projects = list()
             return True
 
@@ -57,13 +57,13 @@ class EmpireProjectList:
             os.makedirs(os.path.dirname(filePath), exist_ok=True)
             with open(filePath, 'wb') as file:
                 pickle.dump(self.Projects, file)
-                E_Utils.Success("Project data has been saved.")
+                EUtils.Success("Project data has been saved.")
                 return True
         except pickle.PicklingError as e:
-            E_Utils.Error(f"(pickle error) Failed to save project data to {filePath}!")
-            E_Utils.Error(e)
+            EUtils.Error(f"(pickle error) Failed to save project data to {filePath}!")
+            EUtils.Error(e)
         except Exception as e:
-            E_Utils.Error(f"Unhandled exception while attempting to save project data to {filePath}!")
+            EUtils.Error(f"Unhandled exception while attempting to save project data to {filePath}!")
         return False
 
 class EmpireProject:
