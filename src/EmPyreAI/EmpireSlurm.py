@@ -1,40 +1,50 @@
 # This file contains the EmpireSlurm class to represent a group of users on the Empire AI Alpha system.
-#
-# Class Properties (readonly):
-#   - id = (get) Returns the GID number
-#   - name = (get) Returns the name of the groups
-#   - members = (get) Returns a list of usernames with membership in this group
-#
-# Static Functions:
-#   - Exists(): Returns bool. True if the group exists, False if it does not.
-#
-# Class Functions:
-#   - GetFromCMD(): Loads group data from the Base Command API into the group_data variable. Returns (bool)
-#   - Commit(): Commits changes of group information to the Base Command API. Returns (bool).
-#   - AddMember(): Adds a member to the membership list of this group. Returns (bool).
-#   - RemoveMember(): Removes a member from the membership list of this group. Returns (bool).
 #  
-# This makes use of the EmPyreAI module and ultimately the Base Command API
-#   to provide user management capabilities to coordinators without requiring
-#   elevated privileges on the cluster.
-#
 # API Documentation: https://slurm.schedmd.com/rest_api.html
 #
-# Author: Kali McLennan (Flatiron Institute) - kmclennan@flatironinstitute.org
+# Author: Kali McLennan (Flatiron Institute/Simons Foundation) - kmclennan@flatironinstitute.org
 
 import getpass
 import requests
 import os
-import pprint
-import sys
 from pathlib import Path
 import EmPyreAI.EmpireUtils as EUtils
-import json
 
 class SlurmNode:
-    def __init__(self, json_data):
-        self.NodeData = json.loads(json_data)
-        print(self.NodeData)
+    def __init__(self, data):
+        if len(data['nodes']) == 1:
+            self.NodeData = data['nodes'][0]
+        else:
+            print("[ DEBUG ] SlurmNode.__init__() supplied node data does not appear to be valid.")
+
+    def Get(self, key):
+        if key in self.NodeData:
+            return self.NodeData[key]
+        else:
+            print("[ DEBUG ] SlurmNode.Get(): Supplied key not found in NodeData dict.")
+
+class SlurmJob:
+    def __init__(self, data):
+        if len(data['jobs']) == 1:
+            self.JobData = data['jobs'][0]
+        else:
+            print("[ DEBUG ] SlurmNode.__init__() supplied node data does not appear to be valid.")
+
+    def Get(self, key):
+        if key in self.JobData:
+            return self.JobData[key]
+        else:
+            print("[ DEBUG ] SlurmNode.Get(): Supplied key not found in NodeData dict.")
+
+    def GetJobID(self):
+        return self.JobData["job_id"]
+    
+    ID = property(GetJobID)
+
+    def GetJobState(self):
+        return self.JobData["job_state"]
+    
+    State = property(GetJobState)
 
 class EmpireSlurm:
     config = {
