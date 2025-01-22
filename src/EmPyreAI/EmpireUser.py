@@ -67,6 +67,10 @@ class EmpireUser:
         creationTime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         retVal.notes = f'{ "created_by": "{getpass.getuser()}", "created_at": "{creationTime}"}'
         return retVal
+    
+    def GetAll():
+        retVal = list()
+        print(E_API.CMSH_Cluster.entities)
 #endregion
 
 #region Constructor
@@ -261,8 +265,9 @@ class EmpireUser:
     Email = property(GetEmail, SetEmail)
 
     def GetGroups(self):
-        retVal = [g.gr_name for g in grp.getgrall() if self.username in g.gr_mem]
-        gid = pwd.getpwnam(self.UserData.username).pw_gid
+        import grp, pwd
+        retVal = [g.gr_name for g in grp.getgrall() if self.Username in g.gr_mem]
+        gid = pwd.getpwnam(self.Username).pw_gid
         retVal.append(grp.getgrgid(gid).gr_name)
         return retVal
     

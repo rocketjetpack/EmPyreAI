@@ -126,6 +126,7 @@ class EmpireGroup:
     return self.group_data.name
   
   name = property(GetName)
+  Name = property(GetName)
   #endregion
 
   #region Group Member Properties
@@ -133,5 +134,13 @@ class EmpireGroup:
     return self.group_data.members
 
   members = property(GetMembers)
+  Members = property(GetMembers)
+  
+  def GetMemberCount(self):
+    return len(self.members)
+  
+  MemberCount = property(GetMemberCount)
   #endregion
+
+  
   

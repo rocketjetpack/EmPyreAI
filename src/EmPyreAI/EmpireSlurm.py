@@ -29,6 +29,12 @@ import pprint
 import sys
 from pathlib import Path
 import EmPyreAI.EmpireUtils as EUtils
+import json
+
+class SlurmNode:
+    def __init__(self, json_data):
+        self.NodeData = json.loads(json_data)
+        print(self.NodeData)
 
 class EmpireSlurm:
     config = {
@@ -46,7 +52,11 @@ class EmpireSlurm:
             "account": "slurmdb/" + self.config["apiVersion"] + "/account/",
             "partitions": "slurm/" + self.config["apiVersion"] + "/partitions",
             "partition": "slurm/" + self.config["apiVersion"] + "/partition/",
-            "users": "slurmdb/" + self.config["apiVersion"] + "/users"
+            "users": "slurmdb/" + self.config["apiVersion"] + "/users",
+            "nodes": "slurm/" + self.config["apiVersion"] + "/nodes",
+            "node": "slurm/" + self.config["apiVersion"] + "/node/",
+            "jobs": "slurm/" + self.config["apiVersion"] + "/jobs",
+            "job": "slurm/" + self.config["apiVersion"] + "/job/",
         }
         self.username = getpass.getuser()
         self.ValidToken = True
@@ -64,6 +74,16 @@ class EmpireSlurm:
             EUtils.Error(message="The token loaded from ~/.slurmtoken is no longer valid.", fatal=True)
             self.ValidToken = False
         self.AllUsers = None
+
+    def GetNode(self, nodeName):
+        self.endpoint = self.endpoints["node"] + nodeName
+        results = self.Get()
+        if results.status_code == 200:
+            node = SlurmNode(results.json())
+            return node
+        else:
+            print("[ DEBUG ] GetNode(): Return code = {results.status_code}")
+            return None
 
     def LoadToken(self):
         if os.path.exists(f"{Path.home()}/.slurmtoken"):
