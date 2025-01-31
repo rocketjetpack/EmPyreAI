@@ -167,7 +167,7 @@ class EmpireSlurm:
             if update_time != None:
                 timestamp = time.mktime(update_time.timetuple())
                 print(self.endpoint)
-                self.endpoint = self.endpoint + f"?update_time={timestamp}"
+                self.endpoint = "slurmdb/" + self.config["apiVersion"] + f"/jobs?start_time={timestamp}"
             results = self.Get()
             if results.status_code != 200:
                 EUtils.Error("GetJobs(): Non-200 return code from the Slurm API server.")
