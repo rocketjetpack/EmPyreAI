@@ -68,6 +68,7 @@ class EmpireSlurm:
             "node": "slurm/" + self.config["apiVersion"] + "/node/",
             "jobs": "slurm/" + self.config["apiVersion"] + "/jobs",
             "job": "slurm/" + self.config["apiVersion"] + "/job/",
+            "dbjobs": "slurmdb/" + self.config["apiVersion"] + "/jobs"
         }
         self.username = getpass.getuser()
         self.ValidToken = True
@@ -155,6 +156,26 @@ class EmpireSlurm:
 
     def Put(self):
         pass
+
+    def GetDBJobs(self, update_time = None):
+        if self.ValidToken == False:
+            EUtils.Error(message="Refusing to query the Slurm API due to an expired authentication token.")
+            return None
+        
+        if self.token != None:
+            self.endpoint = self.endpoints["dbjobs"]
+            if update_time != None:
+                timestamp = time.mktime(update_time.timetuple())
+                print(self.endpoint)
+                self.endpoint = self.endpoint + f"?update_time={timestamp}"
+            results = self.Get()
+            if results.status_code != 200:
+                EUtils.Error("GetJobs(): Non-200 return code from the Slurm API server.")
+            else:
+                return results
+        else:
+            EUtils.Error(f"No Slurm API token found. Cannot use GET.")
+            return None
 
     def GetJobs(self, update_time = None):
         if self.ValidToken == False:
