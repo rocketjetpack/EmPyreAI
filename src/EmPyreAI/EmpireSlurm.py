@@ -154,6 +154,22 @@ class EmpireSlurm:
 
     def Put(self):
         pass
+
+    def GetJobs(self):
+        if self.ValidToken == False:
+            EUtils.Error(message="Refusing to query the Slurm API due to an expired authentication token.")
+            return None
+        
+        if self.token != None:
+            self.endpoint = self.endpoints["jobs"]
+            results = self.Get()
+            if results.status_code != 200:
+                EUtils.Error("GetJobs(): Non-200 return code from the Slurm API server.")
+            else:
+                return results
+        else:
+            EUtils.Error(f"No Slurm API token found. Cannot use GET.")
+            return None
     #endregion
 
     #region Headers
