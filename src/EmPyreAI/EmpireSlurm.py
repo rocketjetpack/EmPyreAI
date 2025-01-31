@@ -9,6 +9,7 @@ import requests
 import os
 from pathlib import Path
 import EmPyreAI.EmpireUtils as EUtils
+import time
 
 class SlurmNode:
     def __init__(self, data):
@@ -155,13 +156,17 @@ class EmpireSlurm:
     def Put(self):
         pass
 
-    def GetJobs(self):
+    def GetJobs(self, update_time = None):
         if self.ValidToken == False:
             EUtils.Error(message="Refusing to query the Slurm API due to an expired authentication token.")
             return None
         
         if self.token != None:
             self.endpoint = self.endpoints["jobs"]
+            if update_time != None:
+                timestamp = time.mktime(update_time.timetuple())
+                print(self.endpoint)
+                self.endpoint = self.endpoint + f"?update_time={timestamp}"
             results = self.Get()
             if results.status_code != 200:
                 EUtils.Error("GetJobs(): Non-200 return code from the Slurm API server.")
