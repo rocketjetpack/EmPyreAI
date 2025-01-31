@@ -1,33 +1,50 @@
 # This file contains the EmpireSlurm class to represent a group of users on the Empire AI Alpha system.
-#
-# Class Properties (readonly):
-#   - id = (get) Returns the GID number
-#   - name = (get) Returns the name of the groups
-#   - members = (get) Returns a list of usernames with membership in this group
-#
-# Static Functions:
-#   - Exists(): Returns bool. True if the group exists, False if it does not.
-#
-# Class Functions:
-#   - GetFromCMD(): Loads group data from the Base Command API into the group_data variable. Returns (bool)
-#   - Commit(): Commits changes of group information to the Base Command API. Returns (bool).
-#   - AddMember(): Adds a member to the membership list of this group. Returns (bool).
-#   - RemoveMember(): Removes a member from the membership list of this group. Returns (bool).
 #  
-# This makes use of the EmPyreAI module and ultimately the Base Command API
-#   to provide user management capabilities to coordinators without requiring
-#   elevated privileges on the cluster.
-#
 # API Documentation: https://slurm.schedmd.com/rest_api.html
 #
-# Author: Kali McLennan (Flatiron Institute) - kmclennan@flatironinstitute.org
+# Author: Kali McLennan (Flatiron Institute/Simons Foundation) - kmclennan@flatironinstitute.org
 
 import getpass
 import requests
 import os
-import pprint
-import sys
 from pathlib import Path
+import EmPyreAI.EmpireUtils as EUtils
+
+class SlurmNode:
+    def __init__(self, data):
+        if len(data['nodes']) == 1:
+            self.NodeData = data['nodes'][0]
+        else:
+            print("[ DEBUG ] SlurmNode.__init__() supplied node data does not appear to be valid.")
+
+    def Get(self, key):
+        if key in self.NodeData:
+            return self.NodeData[key]
+        else:
+            print("[ DEBUG ] SlurmNode.Get(): Supplied key not found in NodeData dict.")
+
+class SlurmJob:
+    def __init__(self, data):
+        if len(data['jobs']) == 1:
+            self.JobData = data['jobs'][0]
+        else:
+            print("[ DEBUG ] SlurmNode.__init__() supplied node data does not appear to be valid.")
+
+    def Get(self, key):
+        if key in self.JobData:
+            return self.JobData[key]
+        else:
+            print("[ DEBUG ] SlurmNode.Get(): Supplied key not found in NodeData dict.")
+
+    def GetJobID(self):
+        return self.JobData["job_id"]
+    
+    ID = property(GetJobID)
+
+    def GetJobState(self):
+        return self.JobData["job_state"]
+    
+    State = property(GetJobState)
 
 class EmpireSlurm:
     config = {
@@ -45,11 +62,38 @@ class EmpireSlurm:
             "account": "slurmdb/" + self.config["apiVersion"] + "/account/",
             "partitions": "slurm/" + self.config["apiVersion"] + "/partitions",
             "partition": "slurm/" + self.config["apiVersion"] + "/partition/",
-            "users": "slurmdb/" + self.config["apiVersion"] + "/users"
+            "users": "slurmdb/" + self.config["apiVersion"] + "/users",
+            "nodes": "slurm/" + self.config["apiVersion"] + "/nodes",
+            "node": "slurm/" + self.config["apiVersion"] + "/node/",
+            "jobs": "slurm/" + self.config["apiVersion"] + "/jobs",
+            "job": "slurm/" + self.config["apiVersion"] + "/job/",
         }
         self.username = getpass.getuser()
+        self.ValidToken = True
         self.token = self.LoadToken()
+        if self.token == None:
+            # Cannot load the token from the users home directory
+            EUtils.Error(message="Unable to load Slurm API token from ~/.slurmtoken", fatal=False)
+            self.ValidToken = False
+
+        # Run a GET request for the diag endpoint to verify that the token is active and valid.
+        self.endpoint = self.endpoints["diag"]
+        getTest = self.Get()
+        if getTest.status_code == 401:
+            # 401 error indicates the token has expired
+            EUtils.Error(message="The token loaded from ~/.slurmtoken is no longer valid.", fatal=True)
+            self.ValidToken = False
         self.AllUsers = None
+
+    def GetNode(self, nodeName):
+        self.endpoint = self.endpoints["node"] + nodeName
+        results = self.Get()
+        if results.status_code == 200:
+            node = SlurmNode(results.json())
+            return node
+        else:
+            print("[ DEBUG ] GetNode(): Return code = {results.status_code}")
+            return None
 
     def LoadToken(self):
         if os.path.exists(f"{Path.home()}/.slurmtoken"):
@@ -91,6 +135,10 @@ class EmpireSlurm:
         pass
 
     def Get(self, additionalFields = ""):
+        if self.ValidToken == False:
+            EUtils.Error(message="Refusing to query the Slurm API due to an expired authentication token.")
+            return None
+        
         if self.token != None:
             if additionalFields != None:
                 url = f"{self.config['protocol']}://{self.config['apiServer']}:{self.config['port']}/{self.endpoint}/{additionalFields}"

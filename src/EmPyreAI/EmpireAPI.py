@@ -13,5 +13,6 @@ if getpass.getuser() != "root":
         ca_file='/usr/lib64/python3.9/site-packages/pythoncm/etc/cacert.pem'
      )
      CMSH_Cluster = Cluster(settings)
+     print("Initialized connection to CMSH_Cluster")
 else:
      CMSH_Cluster = Cluster()
