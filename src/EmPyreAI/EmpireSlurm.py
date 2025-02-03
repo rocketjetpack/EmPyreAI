@@ -9,7 +9,6 @@ import requests
 import os
 from pathlib import Path
 import EmPyreAI.EmpireUtils as EUtils
-import time
 
 class SlurmNode:
     def __init__(self, data):
@@ -158,6 +157,8 @@ class EmpireSlurm:
         pass
 
     def GetDBJobs(self, update_time = None):
+        # The format of the search fields varies (frustratingly). For the version of slurmrestd active on EmpireAI as of 2025-01-31
+        #   the time format is YYYY-MM-DD and not UNIX timestamp like the documentation states.
         if self.ValidToken == False:
             EUtils.Error(message="Refusing to query the Slurm API due to an expired authentication token.")
             return None
@@ -165,7 +166,7 @@ class EmpireSlurm:
         if self.token != None:
             self.endpoint = self.endpoints["dbjobs"]
             if update_time != None:
-                timestamp = time.mktime(update_time.timetuple())
+                timestamp = update_time
                 print(self.endpoint)
                 self.endpoint = "slurmdb/" + self.config["apiVersion"] + f"/jobs?start_time={timestamp}"
             results = self.Get()
@@ -177,15 +178,15 @@ class EmpireSlurm:
             EUtils.Error(f"No Slurm API token found. Cannot use GET.")
             return None
 
-    def GetJobs(self, update_time = None):
+    def GetJobs(self, start_time: str = None):
         if self.ValidToken == False:
             EUtils.Error(message="Refusing to query the Slurm API due to an expired authentication token.")
             return None
         
         if self.token != None:
             self.endpoint = self.endpoints["jobs"]
-            if update_time != None:
-                timestamp = time.mktime(update_time.timetuple())
+            if start_time != None:
+                timestamp = start_time.stsrftime("YYYY-MM-DDTHH:MM:SS")
                 print(self.endpoint)
                 self.endpoint = self.endpoint + f"?update_time={timestamp}"
             results = self.Get()
