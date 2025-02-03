@@ -162,7 +162,7 @@ class EmpireSlurm:
             return None
         
         if self.token != None:
-            self.endpoint = f'{self.endpoints["dbjobs"]}/start_time={start_time}&end_time={end_time}&partition={partition}'
+            self.endpoint = f'{self.endpoints["dbjobs"]}?start_time={start_time}&end_time={end_time}&partition={partition}'
             result = self.Get()
             if result.status_code != 200:
                 EUtils.Error("GetJobs(): Non-200 return code from the Slurm API server.")
