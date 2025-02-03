@@ -156,6 +156,23 @@ class EmpireSlurm:
     def Put(self):
         pass
 
+    def GetDBJobsByPartition(self, start_time: str, end_time: str, partition: str):
+        if self.ValidToken == False:
+            EUtils.Error(message="Refusing to query the Slurm API due to an expired authentication token.")
+            return None
+        
+        if self.token != None:
+            self.endpoint = f'{self.endpoints["dbjobs"]}/start_time={start_time}&end_time={end_time}&partition={partition}'
+            result = self.Get()
+            if result.status_code != 200:
+                EUtils.Error("GetJobs(): Non-200 return code from the Slurm API server.")
+            else:
+                return results
+        else:
+            EUtils.Error(f"No Slurm API token found. Cannot use GET.")
+            return None
+
+
     def GetDBJobs(self, update_time = None):
         # The format of the search fields varies (frustratingly). For the version of slurmrestd active on EmpireAI as of 2025-01-31
         #   the time format is YYYY-MM-DD and not UNIX timestamp like the documentation states.
