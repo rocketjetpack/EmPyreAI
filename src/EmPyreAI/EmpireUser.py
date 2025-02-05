@@ -194,6 +194,18 @@ class EmpireUser:
     
     Phone = property(GetPhone, SetPhone)
 
+    def GetLab(self):
+        notes = self.Notes
+        if "lab" in notes.keys():
+            return notes["lab"]
+        return None
+    
+    def SetLab(self, value):
+        self.SetNote("lab", value)
+        self.Committed = False
+
+    Lab = property(GetLab, SetLab)
+
     def GetInstitution(self):
         notes = self.Notes
         if "institution" in notes.keys():

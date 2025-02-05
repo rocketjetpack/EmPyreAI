@@ -135,7 +135,7 @@ class EmpireSlurm:
     def Post(self):
         pass
 
-    def Get(self, additionalFields = ""):
+    def Get(self, additionalFields: str = None):
         if self.ValidToken == False:
             EUtils.Error(message="Refusing to query the Slurm API due to an expired authentication token.")
             return None
