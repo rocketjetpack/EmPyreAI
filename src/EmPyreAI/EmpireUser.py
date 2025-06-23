@@ -194,6 +194,19 @@ class EmpireUser:
     
     Phone = property(GetPhone, SetPhone)
 
+    def GetLab(self):
+        try:
+            notes = self.Notes
+            if "lab" in notes.keys():
+                return notes["lab"]
+            return None
+
+    def SetLab(self, value):
+        self.SetNote("lab", value)
+        self.Committed = Fase
+
+    Lab = property(GetLab, SetLab)
+
     def GetInstitution(self):
         notes = self.Notes
         if "institution" in notes.keys():
@@ -250,6 +263,7 @@ class EmpireUser:
         return f"{self.FirstName} {self.LastName}"
     
     FullName = property(GetFullname)
+
 
     def GetEmail(self):
         return self.UserData.email

@@ -8,3 +8,6 @@ Clone this repository into any project that needs access then import the needed 
 
 ## Example Usage:
 See the [Empire AI User Management](https://github.com/rocketjetpack/empire-ai_account-manager) repository for example usage.
+
+# Version History
+2025-06-23 - Add lab management property to EmpireUser class.
